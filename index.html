@@ -1,90 +1,119 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İhsan Çelik - Destek</title>
-    <style>
-        /* Yükleme ekranı stili */
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999;
-        }
-        .loader-bar { width: 200px; height: 4px; background: #eee; position: relative; overflow: hidden; margin-top: 10px; }
-        .loader-bar::after {
-            content: ''; position: absolute; left: -50%; width: 50%; height: 100%;
-            background: #3498db; animation: loading 1.5s infinite;
-        }
-        @keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ihsancelik.com — IT Destek</title>
+
+<style>
+/* ... (Senin paylaştığın tüm CSS kodları burada aynen durmalı) ... */
+:root{--blue:#0078d4;--blue-dk:#005a9e;--bg:#f3f2f1;--br:#edebe9;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg)}
+#loader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.ld-bar{width:180px;height:3px;background:var(--br);border-radius:2px;overflow:hidden}
+.ld-fill{height:100%;background:var(--blue);animation:ldf 1.6s ease-in-out infinite}
+@keyframes ldf{0%{width:0;margin-left:0}50%{width:75%;margin-left:0}100%{width:0;margin-left:100%}}
+#auth-wrap, #app { display: none; } /* Başlangıçta gizli */
+</style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <img src="shield-icon.png" alt="Logo" width="80"> <p>Bağlanıyor...</p>
-        <div class="loader-bar"></div>
+<div id="loader">
+  <div style="font-size:48px;">🛡️</div>
+  <div style="font-size:14px;">Bağlanıyor…</div>
+  <div class="ld-bar"><div class="ld-fill"></div></div>
+</div>
+
+<div id="auth-wrap">
+    <div style="color:white; text-align:center; padding:50px;">
+        <h2>IT Destek Giriş</h2>
+        <p>Lütfen bekleyiniz...</p>
     </div>
+</div>
 
-    <div id="main-app" style="display: none;">
-        <h1>Uygulama Hazır</h1>
+<div id="app">
+    <div id="main-content">
+        <h1>Dashboard Hazır</h1>
+        <button onclick="auth.signOut()">Çıkış Yap</button>
     </div>
+</div>
 
-    <script type="module">
-        // 1. Firebase Modüllerini İçe Aktar
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script type="module">
+  // 1. Firebase Modüllerini İçe Aktar (v10)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // 2. Senin Gönderdiğin Yapılandırma Bilgileri
-        const firebaseConfig = {
-            apiKey: "AIzaSyBrvXjyki5TOeqW_kp88LD9E5kPv2dMvTg",
-            authDomain: "ihsancelik-destek.firebaseapp.com",
-            projectId: "ihsancelik-destek",
-            storageBucket: "ihsancelik-destek.firebasestorage.app",
-            messagingSenderId: "735030581861",
-            appId: "1:735030581861:web:0658649dbacb68e70b848c"
-        };
+  // 2. Senin Gönderdiğin Yapılandırma
+  const firebaseConfig = {
+    apiKey: "AIzaSyBrvXjyki5TOeqW_kp88LD9E5kPv2dMvTg",
+    authDomain: "ihsancelik-destek.firebaseapp.com",
+    projectId: "ihsancelik-destek",
+    storageBucket: "ihsancelik-destek.firebasestorage.app",
+    messagingSenderId: "735030581861",
+    appId: "1:735030581861:web:0658649dbacb68e70b848c"
+  };
 
-        // Firebase'i Başlat
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+  // Başlat
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-        // Arayüz Elementleri
-        const loadingScreen = document.getElementById('loading-screen');
-        const mainApp = document.getElementById('main-app');
+  // Global erişim için (isteğe bağlı)
+  window.auth = auth;
 
-        // 3. Oturum ve Veri Kontrolü
-        onAuthStateChanged(auth, async (user) => {
-            console.log("Sistem kontrol ediliyor...");
-            
-            try {
-                if (user) {
-                    console.log("Giriş yapıldı:", user.uid);
-                    
-                    // Firestore'dan verileri çek
-                    const userDocRef = doc(db, "users", user.uid);
-                    const userDoc = await getDoc(userDocRef);
+  // Arayüz Elementleri
+  const loader = document.getElementById('loader');
+  const authWrap = document.getElementById('auth-wrap');
+  const appWrap = document.getElementById('app');
 
-                    if (userDoc.exists()) {
-                        console.log("Kullanıcı verisi bulundu.");
-                    } else {
-                        console.log("Yeni kullanıcı kaydı oluşturuluyor...");
-                        await setDoc(userDocRef, { locale: 'tr', lastSeen: new Date() });
-                    }
-                } else {
-                    console.log("Aktif oturum yok.");
-                }
-            } catch (error) {
-                console.error("Bir hata oluştu:", error.message);
-            } finally {
-                // NE OLURSA OLSUN: Yükleme ekranını kapat, uygulamayı göster.
-                if (loadingScreen) loadingScreen.style.display = 'none';
-                if (mainApp) mainApp.style.display = 'block';
-                console.log("Uygulama açıldı.");
-            }
-        });
-    </script>
+  // 3. Oturum Takibi (En Kritik Kısım)
+  onAuthStateChanged(auth, async (user) => {
+    console.log("Oturum durumu kontrol ediliyor...");
+    
+    try {
+      if (user) {
+        // KULLANICI GİRİŞ YAPMIŞ
+        console.log("Giriş yapıldı:", user.email);
+        
+        // Kullanıcı verilerini Firestore'dan çek (Örn: Yetki kontrolü için)
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        
+        // Uygulamayı göster
+        loader.style.opacity = '0';
+        setTimeout(() => { 
+            loader.style.display = 'none';
+            authWrap.style.display = 'none';
+            appWrap.style.display = 'block'; 
+        }, 300);
+
+      } else {
+        // KULLANICI GİRİŞ YAPMAMIŞ
+        console.log("Oturum yok, login ekranına yönlendiriliyor.");
+        loader.style.display = 'none';
+        appWrap.style.display = 'none';
+        authWrap.style.display = 'flex';
+      }
+    } catch (error) {
+      console.error("Hata oluştu:", error);
+      // Hata olsa bile loader'ı kapat ki ekran donmasın
+      loader.style.display = 'none';
+      authWrap.style.display = 'flex';
+    }
+  });
+
+  // Örnek Login Fonksiyonu (Düğmene bağlamak için)
+  window.doLogin = async () => {
+      const email = document.getElementById('l-em').value;
+      const pass = document.getElementById('l-pw').value;
+      try {
+          await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+          alert("Hata: " + err.message);
+      }
+  };
+
+</script>
 </body>
 </html>
