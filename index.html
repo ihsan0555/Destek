@@ -1,76 +1,90 @@
-<script type="module">
-    // Firebase Modüllerini İçe Aktar
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // 1. Firebase Yapılandırması (Kendi bilgilerinle değiştir)
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-
-    // Firebase Başlat
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // Yükleme ekranını kapatan yardımcı fonksiyon
-    function stopLoading() {
-        const loadingScreen = document.getElementById('loading-screen'); // ID'ni kontrol et
-        if (loadingScreen) {
-            loadingScreen.style.display = 'none';
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İhsan Çelik - Destek</title>
+    <style>
+        /* Yükleme ekranı stili */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
         }
-        // Eğer Redux kullanıyorsan:
-        // dispatch({ type: 'SET_BLOCKING', payload: false });
-    }
-
-    // 2. Ana Oturum ve Veri Akışı
-    onAuthStateChanged(auth, async (user) => {
-        console.log("Oturum durumu kontrol ediliyor...");
-        
-        try {
-            if (user) {
-                console.log("Kullanıcı giriş yapmış:", user.uid);
-                
-                // Firestore'dan kullanıcı verilerini çek
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    console.log("Veri başarıyla çekildi:", userData);
-                    // State güncelleme işlemleri buraya
-                    // dispatch({ type: 'SET_STORAGE_DATA', payload: userData });
-                } else {
-                    console.warn("Kullanıcı dökümanı bulunamadı, yeni oluşturuluyor...");
-                    const defaultData = { locale: 'tr', theme: 'light', firstLogin: new Date() };
-                    await setDoc(userDocRef, defaultData);
-                }
-            } else {
-                console.log("Kullanıcı giriş yapmamış.");
-                // Giriş sayfasına yönlendirme veya varsayılan dil ayarı
-            }
-        } catch (error) {
-            console.error("Kritik Hata:", error.message);
-            // Hata durumunda kullanıcıya bilgi verilebilir
-            if (error.code === 'permission-denied') {
-                alert("Veritabanına erişim yetkiniz yok. Lütfen giriş yapın.");
-            }
-        } finally {
-            // NE OLURSA OLSUN Yükleme ekranını kapat! 
-            // Bu satır uygulamanın açılmasını sağlayan en kritik yerdir.
-            stopLoading();
-            console.log("Yükleme işlemi tamamlandı.");
+        .loader-bar { width: 200px; height: 4px; background: #eee; position: relative; overflow: hidden; margin-top: 10px; }
+        .loader-bar::after {
+            content: ''; position: absolute; left: -50%; width: 50%; height: 100%;
+            background: #3498db; animation: loading 1.5s infinite;
         }
-    });
+        @keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
+    </style>
+</head>
+<body>
 
-</script>
-
-<div id="loading-screen">
-    <p>Bağlanıyor...</p>
+    <div id="loading-screen">
+        <img src="shield-icon.png" alt="Logo" width="80"> <p>Bağlanıyor...</p>
+        <div class="loader-bar"></div>
     </div>
+
+    <div id="main-app" style="display: none;">
+        <h1>Uygulama Hazır</h1>
+    </div>
+
+    <script type="module">
+        // 1. Firebase Modüllerini İçe Aktar
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // 2. Senin Gönderdiğin Yapılandırma Bilgileri
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrvXjyki5TOeqW_kp88LD9E5kPv2dMvTg",
+            authDomain: "ihsancelik-destek.firebaseapp.com",
+            projectId: "ihsancelik-destek",
+            storageBucket: "ihsancelik-destek.firebasestorage.app",
+            messagingSenderId: "735030581861",
+            appId: "1:735030581861:web:0658649dbacb68e70b848c"
+        };
+
+        // Firebase'i Başlat
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Arayüz Elementleri
+        const loadingScreen = document.getElementById('loading-screen');
+        const mainApp = document.getElementById('main-app');
+
+        // 3. Oturum ve Veri Kontrolü
+        onAuthStateChanged(auth, async (user) => {
+            console.log("Sistem kontrol ediliyor...");
+            
+            try {
+                if (user) {
+                    console.log("Giriş yapıldı:", user.uid);
+                    
+                    // Firestore'dan verileri çek
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        console.log("Kullanıcı verisi bulundu.");
+                    } else {
+                        console.log("Yeni kullanıcı kaydı oluşturuluyor...");
+                        await setDoc(userDocRef, { locale: 'tr', lastSeen: new Date() });
+                    }
+                } else {
+                    console.log("Aktif oturum yok.");
+                }
+            } catch (error) {
+                console.error("Bir hata oluştu:", error.message);
+            } finally {
+                // NE OLURSA OLSUN: Yükleme ekranını kapat, uygulamayı göster.
+                if (loadingScreen) loadingScreen.style.display = 'none';
+                if (mainApp) mainApp.style.display = 'block';
+                console.log("Uygulama açıldı.");
+            }
+        });
+    </script>
+</body>
+</html>
