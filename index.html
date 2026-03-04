@@ -272,7 +272,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 </div>
 
 <!-- AUTH -->
-<div id="auth-wrap">
+<div id="auth-wrap" style="display:flex">
   <div id="v-login">
     <div class="a-brand"><div class="a-brand-icon">🛡️</div><div class="a-brand-name"><b>ihsancelik</b>.com IT</div></div>
     <div class="a-card">
@@ -497,7 +497,7 @@ const AVC = ["#0078d4","#107c10","#8764b8","#ca5010","#d13438","#008272","#005a9
 // ═══════════════════════════════════════════
 // AUTH STATE OBSERVER
 // ═══════════════════════════════════════════
-// Auth state observer - loader gizli başladığından direkt çalışır
+// Firebase oturum kontrolü - giriş yapılmışsa uygulamayı aç
 auth.onAuthStateChanged(async fireUser => {
   try {
     if (fireUser) {
