@@ -290,7 +290,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
         <div class="a-link" onclick="showV('v-reg')">Hesap oluştur →</div>
       </div>
     </div>
-    <div class="a-hint" id="a-hint">Admin: admin@ihsancelik.com / Admin@2026</div>
+    <div class="a-hint" id="a-hint">Admin: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ec8d88818582ac85849f8d828f89808587c28f8381">[email&#160;protected]</a> / Admin@2026</div>
   </div>
   <div id="v-reg" style="display:none">
     <div class="a-brand"><div class="a-brand-icon">🛡️</div><div class="a-brand-name"><b>ihsancelik</b>.com IT</div></div>
@@ -456,7 +456,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 </div>
 <div class="toast-c" id="tc"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ═══════════════════════════════════════════
 // FIREBASE INIT
 // ═══════════════════════════════════════════
@@ -494,21 +494,34 @@ const AVC = ["#0078d4","#107c10","#8764b8","#ca5010","#d13438","#008272","#005a9
 // ═══════════════════════════════════════════
 // AUTH STATE OBSERVER
 // ═══════════════════════════════════════════
+// Timeout fallback — loader kapanmazsa 6 saniye sonra zorla kapat
+setTimeout(() => {
+  const l = document.getElementById("loader");
+  if (l && l.style.display !== "none") {
+    hideLoader();
+    showAuthScreen();
+  }
+}, 6000);
+
 auth.onAuthStateChanged(async fireUser => {
-  if (fireUser) {
-    // Load user profile from Firestore
-    const snap = await db.collection("users").doc(fireUser.uid).get();
-    if (snap.exists) {
-      CU = { id: fireUser.uid, ...snap.data() };
-      hideLoader();
-      bootApp();
+  try {
+    if (fireUser) {
+      const snap = await db.collection("users").doc(fireUser.uid).get();
+      if (snap.exists) {
+        CU = { id: fireUser.uid, ...snap.data() };
+        hideLoader();
+        bootApp();
+      } else {
+        await auth.signOut();
+        hideLoader();
+        showAuthScreen();
+      }
     } else {
-      // Profile missing — sign out
-      await auth.signOut();
       hideLoader();
       showAuthScreen();
     }
-  } else {
+  } catch(e) {
+    console.error("Auth error:", e);
     hideLoader();
     showAuthScreen();
   }
@@ -1030,9 +1043,4 @@ document.addEventListener("click",e=>{document.querySelectorAll(".ov.on").forEac
 document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".ov.on").forEach(m=>m.classList.remove("on"));});
 function toggleSB(){document.getElementById("sb").classList.toggle("on");document.getElementById("sb-ov").classList.toggle("on");}
 function closeSB(){document.getElementById("sb").classList.remove("on");document.getElementById("sb-ov").classList.remove("on");}
-function toast(msg,type="i"){const c=document.getElementById("tc");const t=document.createElement("div");const ic={s:"✅",e:"❌",i:"ℹ️",w:"⚠️"};t.className="toast "+(type||"i");t.innerHTML=`<span>${ic[type]||"ℹ️"}</span><span>${esc(msg)}</span>`;c.appendChild(t);setTimeout(()=>{t.style.cssText="opacity:0;transform:translateX(14px);transition:all .3s";setTimeout(()=>t.remove(),300);},3500);}
-document.getElementById("l-pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-document.getElementById("l-em").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-<\/script>
-</body>
-</html>
+function toast(msg,type="i"){const c=document.getElementById("tc");const t=document.createElement("div");const ic={s:"✅",e:"❌",i:"ℹ️",w:"⚠️"};t.className="toast "+(type||"i");t.innerHTML=`<span>${ic[type]||"ℹ️"}</span><span>${esc(msg)}</span>`;c.appendChild(t);setTimeout(()=>{t.style.cssText="opacity:0;transform:translateX(14px);transition:all .3s";setTimeout(()=>t.remove(),30
