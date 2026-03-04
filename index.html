@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ihsancelik.com — IT Destek</title>
-
-<!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
@@ -15,48 +13,30 @@ async function setupAdmin() {
   if(!btn) return;
   btn.textContent = "Kuruluyor...";
   btn.disabled = true;
-  const ADMIN_EMAIL = "admin@ihsancelik.com";
-  const ADMIN_PASS  = "Admin@2026";
+  const EM = "admin@ihsancelik.com";
+  const PW = "Admin@2026";
+  const profile = {email:EM,name:"Admin",fn:"Admin",ln:"",role:"admin",dept:"IT",ini:"AD",col:"#0078d4",active:true,created:new Date().toISOString(),lastLogin:null};
   try {
     try {
-      const cred = await auth.signInWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASS);
-      const snap = await db.collection("users").doc(cred.user.uid).get();
-      if (!snap.exists) {
-        await db.collection("users").doc(cred.user.uid).set({
-          email:ADMIN_EMAIL, name:"Admin", fn:"Admin", ln:"",
-          role:"admin", dept:"IT", ini:"AD", col:"#0078d4",
-          active:true, created:new Date().toISOString(), lastLogin:null
-        });
-        btn.textContent = "Profil olusturuldu! Giris yapin.";
-      } else if (snap.data().role !== "admin") {
-        await db.collection("users").doc(cred.user.uid).update({role:"admin"});
-        btn.textContent = "Rol admin yapildi! Giris yapin.";
-      } else {
-        btn.textContent = "Admin zaten mevcut! Giris yapin.";
-      }
+      const c = await auth.signInWithEmailAndPassword(EM, PW);
+      const s = await db.collection("users").doc(c.user.uid).get();
+      if (!s.exists) { await db.collection("users").doc(c.user.uid).set(profile); btn.textContent="Profil olusturuldu! Giris yapin."; }
+      else if (s.data().role !== "admin") { await db.collection("users").doc(c.user.uid).update({role:"admin"}); btn.textContent="Rol admin yapildi!"; }
+      else { btn.textContent="Admin mevcut! Giris yapin."; }
       await auth.signOut();
     } catch(e2) {
-      const notFound = ["auth/user-not-found","auth/invalid-credential","auth/wrong-password","auth/invalid-login-credentials"];
-      if (notFound.includes(e2.code)) {
-        const cred = await auth.createUserWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASS);
-        await db.collection("users").doc(cred.user.uid).set({
-          email:ADMIN_EMAIL, name:"Admin", fn:"Admin", ln:"",
-          role:"admin", dept:"IT", ini:"AD", col:"#0078d4",
-          active:true, created:new Date().toISOString(), lastLogin:null
-        });
+      if(["auth/user-not-found","auth/invalid-credential","auth/wrong-password","auth/invalid-login-credentials"].includes(e2.code)){
+        const c = await auth.createUserWithEmailAndPassword(EM, PW);
+        await db.collection("users").doc(c.user.uid).set(profile);
         await auth.signOut();
         btn.textContent = "Admin olusturuldu! Simdi giris yapin.";
       } else { throw e2; }
     }
-  } catch(e) {
-    btn.textContent = "Hata: " + e.message;
-    console.error(e);
-  }
+  } catch(e) { btn.textContent="Hata: "+e.message; console.error(e); }
   btn.disabled = false;
-  setTimeout(() => { btn.textContent = "🔧 Admin hesabi olustur / sifirla"; }, 6000);
+  setTimeout(()=>{ btn.textContent="🔧 Admin hesabi olustur / sifirla"; }, 5000);
 }
 </script>
-
 <style>
 :root{
   --blue:#0078d4;--blue-dk:#005a9e;--blue-lt:#deecf9;--blue-md:#c7e0f4;
