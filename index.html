@@ -592,32 +592,18 @@ function retryConnection() {
   initAuthListener();
 }
 
-// ── HARD TIMEOUT: show retry button after 4s, force auth screen after 8s ──
+// ── TIMEOUT: 2.5 saniye içinde Firebase cevap vermezse direkt auth ekranı ──
 let hardTimeout = setTimeout(() => {
   if (!loaderDone) {
-    document.getElementById("ld-txt").textContent = "Bağlantı kurulamadı";
-    document.getElementById("ld-txt").style.color = "#d13438";
-    document.getElementById("ld-retry").style.display = "block";
-    // Auto redirect to auth after another 3 seconds
-    setTimeout(() => {
-      if (!loaderDone) showAuthScreen();
-    }, 3000);
+    console.warn("Firebase timeout — showing auth screen");
+    showAuthScreen();
   }
-}, 4000);
+}, 2500);
 
 function initAuthListener() {
-  if (!firebaseReady) {
-    showAuthScreen();
-    return;
-  }
-
-  // Set a per-attempt timeout
-  const attemptTimeout = setTimeout(() => {
-    if (!loaderDone) showAuthScreen();
-  }, 7000);
+  if (!firebaseReady) { showAuthScreen(); return; }
 
   auth.onAuthStateChanged(async fireUser => {
-    clearTimeout(attemptTimeout);
     clearTimeout(hardTimeout);
     try {
       if (fireUser) {
@@ -638,8 +624,6 @@ function initAuthListener() {
       showAuthScreen();
     }
   }, (error) => {
-    // Auth state error callback
-    clearTimeout(attemptTimeout);
     clearTimeout(hardTimeout);
     console.error("Auth state error:", error);
     showAuthScreen();
