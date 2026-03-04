@@ -468,9 +468,24 @@ const firebaseConfig = {
   messagingSenderId: "735030581861",
   appId: "1:735030581861:web:0658649dbacb68e70b848c"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+// Firebase başlatma
+let auth, db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db   = firebase.firestore();
+  // Türkiye için Firestore ayarları
+  db.settings({ experimentalForceLongPolling: true, merge: true });
+} catch(e) {
+  console.error("Firebase init error:", e);
+  // Firebase başlatılamazsa direkt auth ekranını göster
+  window.addEventListener("DOMContentLoaded", () => {
+    const l = document.getElementById("loader");
+    if (l) l.style.display = "none";
+    const a = document.getElementById("auth-wrap");
+    if (a) a.style.display = "flex";
+  });
+}
 
 // ═══════════════════════════════════════════
 // STATE
@@ -494,14 +509,15 @@ const AVC = ["#0078d4","#107c10","#8764b8","#ca5010","#d13438","#008272","#005a9
 // ═══════════════════════════════════════════
 // AUTH STATE OBSERVER
 // ═══════════════════════════════════════════
-// Timeout fallback — loader kapanmazsa 6 saniye sonra zorla kapat
+// Timeout fallback — loader kapanmazsa 5 saniye sonra zorla kapat
 setTimeout(() => {
   const l = document.getElementById("loader");
-  if (l && l.style.display !== "none") {
+  if (l && l.style.opacity !== "0") {
+    console.warn("Timeout: forcing auth screen");
     hideLoader();
     showAuthScreen();
   }
-}, 6000);
+}, 5000);
 
 auth.onAuthStateChanged(async fireUser => {
   try {
@@ -529,8 +545,10 @@ auth.onAuthStateChanged(async fireUser => {
 
 function hideLoader() {
   const l = document.getElementById("loader");
+  if (!l) return;
   l.style.opacity = "0";
-  setTimeout(() => l.style.display = "none", 300);
+  l.style.pointerEvents = "none";
+  setTimeout(() => { l.style.display = "none"; }, 300);
 }
 function showAuthScreen() {
   document.getElementById("auth-wrap").style.display = "flex";
