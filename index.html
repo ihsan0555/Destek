@@ -6,46 +6,88 @@
 <title>ihsancelik.com — IT Destek</title>
 
 <style>
-/* ... (Senin paylaştığın tüm CSS kodları burada aynen durmalı) ... */
-:root{--blue:#0078d4;--blue-dk:#005a9e;--bg:#f3f2f1;--br:#edebe9;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);background:var(--bg)}
-#loader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+:root{
+  --blue:#0078d4;--blue-dk:#005a9e;--blue-lt:#deecf9;--blue-md:#c7e0f4;
+  --green:#107c10;--green-lt:#dff6dd;--red:#d13438;--red-lt:#fde7e9;
+  --orange:#ca5010;--orange-lt:#fdf3d0;--purple:#8764b8;--purple-lt:#f4f0fb;
+  --bg:#f3f2f1;--white:#fff;
+  --s-bg:#1b1b2e;--s-text:rgba(255,255,255,.85);--s-muted:rgba(255,255,255,.4);
+  --s-hover:rgba(255,255,255,.07);--s-active:rgba(0,120,212,.22);
+  --t1:#323130;--t2:#605e5c;--t3:#a19f9d;
+  --br:#edebe9;--br-dk:#c8c6c4;
+  --sh1:0 1.6px 3.6px rgba(0,0,0,.13),0 .3px .9px rgba(0,0,0,.1);
+  --sh2:0 3.2px 7.2px rgba(0,0,0,.13),0 .6px 1.8px rgba(0,0,0,.1);
+  --sh3:0 6.4px 14.4px rgba(0,0,0,.13),0 1.2px 3.6px rgba(0,0,0,.1);
+  --r:4px;--rl:8px;--sw:240px;--hh:48px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px;overflow-x:hidden}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s}
+.ld-icon{font-size:48px;animation:ldp 1.4s ease-in-out infinite}
+@keyframes ldp{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .ld-bar{width:180px;height:3px;background:var(--br);border-radius:2px;overflow:hidden}
 .ld-fill{height:100%;background:var(--blue);animation:ldf 1.6s ease-in-out infinite}
 @keyframes ldf{0%{width:0;margin-left:0}50%{width:75%;margin-left:0}100%{width:0;margin-left:100%}}
-#auth-wrap, #app { display: none; } /* Başlangıçta gizli */
+
+/* AUTH & APP WRAPPERS */
+#auth-wrap, #app { display: none; min-height: 100vh; }
+#auth-wrap{background:linear-gradient(135deg,#1b1b2e,#16213e);flex-direction:column;align-items:center;justify-content:center;padding:20px}
+
+/* Basit Form Stilleri */
+.a-card{background:#fff;padding:30px;border-radius:var(--rl);width:min(400px,100%);box-shadow:var(--sh3)}
+.fi{margin-bottom:15px;display:flex;flex-direction:column;gap:5px}
+.fl{font-size:11px;font-weight:700;color:var(--t2)}
+.inp{height:40px;padding:0 12px;border:1px solid var(--br-dk);border-radius:var(--r);outline:none}
+.btn{height:40px;border:none;border-radius:var(--r);background:var(--blue);color:#fff;font-weight:700;cursor:pointer;transition:0.2s}
+.btn:hover{background:var(--blue-dk)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.a-err{color:var(--red);font-size:12px;margin-bottom:10px;display:none}
+.a-err.on{display:block}
 </style>
 </head>
 <body>
 
 <div id="loader">
-  <div style="font-size:48px;">🛡️</div>
-  <div style="font-size:14px;">Bağlanıyor…</div>
+  <div class="ld-icon">🛡️</div>
+  <div style="color:var(--t2)">Sistem yükleniyor...</div>
   <div class="ld-bar"><div class="ld-fill"></div></div>
 </div>
 
 <div id="auth-wrap">
-    <div style="color:white; text-align:center; padding:50px;">
-        <h2>IT Destek Giriş</h2>
-        <p>Lütfen bekleyiniz...</p>
+  <div class="a-card">
+    <h2 style="margin-bottom:5px">Giriş Yap</h2>
+    <p style="color:var(--t2);margin-bottom:20px;font-size:13px">IT Destek portalına hoş geldiniz.</p>
+    <div class="a-err" id="l-err"></div>
+    <div class="fi">
+      <label class="fl">E-POSTA</label>
+      <input type="email" id="l-em" class="inp" placeholder="ornek@alanadi.com">
     </div>
+    <div class="fi">
+      <label class="fl">ŞİFRE</label>
+      <input type="password" id="l-pw" class="inp" placeholder="••••••••">
+    </div>
+    <button class="btn" id="l-btn" style="width:100%" onclick="handleLogin()">Giriş Yap →</button>
+  </div>
 </div>
 
 <div id="app">
-    <div id="main-content">
-        <h1>Dashboard Hazır</h1>
-        <button onclick="auth.signOut()">Çıkış Yap</button>
-    </div>
+  <div style="padding:40px; text-align:center">
+    <h1>🛡️ IT Destek Dashboard</h1>
+    <p id="welcome-msg" style="margin:20px 0"></p>
+    <button class="btn" style="padding:0 20px" onclick="handleLogout()">Güvenli Çıkış</button>
+  </div>
 </div>
 
 <script type="module">
-  // 1. Firebase Modüllerini İçe Aktar (v10)
+  // 1. Firebase Modülleri (v10)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // 2. Senin Gönderdiğin Yapılandırma
+  // 2. Yapılandırma (Senin bilgilerini buraya sabitledim)
   const firebaseConfig = {
     apiKey: "AIzaSyBrvXjyki5TOeqW_kp88LD9E5kPv2dMvTg",
     authDomain: "ihsancelik-destek.firebaseapp.com",
@@ -55,63 +97,79 @@ body{font-family:var(--font);background:var(--bg)}
     appId: "1:735030581861:web:0658649dbacb68e70b848c"
   };
 
-  // Başlat
+  // Firebase Başlat
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Global erişim için (isteğe bağlı)
-  window.auth = auth;
-
-  // Arayüz Elementleri
+  // Elementler
   const loader = document.getElementById('loader');
   const authWrap = document.getElementById('auth-wrap');
-  const appWrap = document.getElementById('app');
+  const mainApp = document.getElementById('app');
 
-  // 3. Oturum Takibi (En Kritik Kısım)
+  // 3. Ana Oturum Kontrolü (Hata yönetimli)
   onAuthStateChanged(auth, async (user) => {
-    console.log("Oturum durumu kontrol ediliyor...");
-    
     try {
       if (user) {
-        // KULLANICI GİRİŞ YAPMIŞ
-        console.log("Giriş yapıldı:", user.email);
+        console.log("Oturum başarılı:", user.email);
         
-        // Kullanıcı verilerini Firestore'dan çek (Örn: Yetki kontrolü için)
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+        // Firestore'dan kullanıcı detayını çek (Opsiyonel)
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
         
-        // Uygulamayı göster
+        document.getElementById('welcome-msg').textContent = `Hoş geldin, ${user.email}`;
+
+        // Arayüz Geçişi
         loader.style.opacity = '0';
-        setTimeout(() => { 
-            loader.style.display = 'none';
-            authWrap.style.display = 'none';
-            appWrap.style.display = 'block'; 
-        }, 300);
+        setTimeout(() => {
+          loader.style.display = 'none';
+          authWrap.style.display = 'none';
+          mainApp.style.display = 'block';
+        }, 400);
 
       } else {
-        // KULLANICI GİRİŞ YAPMAMIŞ
-        console.log("Oturum yok, login ekranına yönlendiriliyor.");
+        // Oturum yoksa login göster
         loader.style.display = 'none';
-        appWrap.style.display = 'none';
+        mainApp.style.display = 'none';
         authWrap.style.display = 'flex';
       }
-    } catch (error) {
-      console.error("Hata oluştu:", error);
-      // Hata olsa bile loader'ı kapat ki ekran donmasın
+    } catch (err) {
+      console.error("Sistem Hatası:", err);
+      // Hata olsa da loader'ı kapat ki ekran donmasın
       loader.style.display = 'none';
       authWrap.style.display = 'flex';
     }
   });
 
-  // Örnek Login Fonksiyonu (Düğmene bağlamak için)
-  window.doLogin = async () => {
-      const email = document.getElementById('l-em').value;
-      const pass = document.getElementById('l-pw').value;
-      try {
-          await signInWithEmailAndPassword(auth, email, pass);
-      } catch (err) {
-          alert("Hata: " + err.message);
-      }
+  // 4. Giriş Fonksiyonu
+  window.handleLogin = async () => {
+    const email = document.getElementById('l-em').value;
+    const pass = document.getElementById('l-pw').value;
+    const btn = document.getElementById('l-btn');
+    const errBox = document.getElementById('l-err');
+
+    if(!email || !pass) return alert("Lütfen tüm alanları doldurun.");
+
+    btn.disabled = true;
+    btn.textContent = "Bağlanıyor...";
+    errBox.classList.remove('on');
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error(error);
+      errBox.textContent = "Giriş başarısız: " + (error.code.includes('auth/invalid-credential') ? 'Hatalı şifre veya e-posta' : error.message);
+      errBox.classList.add('on');
+      btn.disabled = false;
+      btn.textContent = "Giriş Yap →";
+    }
+  };
+
+  // 5. Çıkış Fonksiyonu
+  window.handleLogout = () => {
+    signOut(auth).then(() => {
+      window.location.reload();
+    });
   };
 
 </script>
