@@ -34,7 +34,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 ::-webkit-scrollbar-thumb{background:#c8c6c4;border-radius:3px}
 
 /* LOADER */
-#loader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s}
+#loader{position:fixed;inset:0;background:#fff;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s}
 .ld-icon{font-size:48px;animation:ldp 1.4s ease-in-out infinite}
 @keyframes ldp{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.7}}
 .ld-txt{font-size:14px;color:var(--t2)}
@@ -265,7 +265,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 <body>
 
 <!-- LOADER -->
-<div id="loader">
+<div id="loader" style="display:none">
   <div class="ld-icon">🛡️</div>
   <div class="ld-txt">Bağlanıyor…</div>
   <div class="ld-bar"><div class="ld-fill"></div></div>
@@ -290,7 +290,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
         <div class="a-link" onclick="showV('v-reg')">Hesap oluştur →</div>
       </div>
     </div>
-    <div class="a-hint" id="a-hint">Admin: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ec8d88818582ac85849f8d828f89808587c28f8381">[email&#160;protected]</a> / Admin@2026</div>
+    <div class="a-hint" id="a-hint">Admin: admin@ihsancelik.com / Admin@2026</div>
   </div>
   <div id="v-reg" style="display:none">
     <div class="a-brand"><div class="a-brand-icon">🛡️</div><div class="a-brand-name"><b>ihsancelik</b>.com IT</div></div>
@@ -456,7 +456,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 </div>
 <div class="toast-c" id="tc"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ═══════════════════════════════════════════
 // FIREBASE INIT
 // ═══════════════════════════════════════════
@@ -470,22 +470,10 @@ const firebaseConfig = {
 };
 // Firebase başlatma
 let auth, db;
-try {
-  firebase.initializeApp(firebaseConfig);
-  auth = firebase.auth();
-  db   = firebase.firestore();
-  // Türkiye için Firestore ayarları
-  db.settings({ experimentalForceLongPolling: true, merge: true });
-} catch(e) {
-  console.error("Firebase init error:", e);
-  // Firebase başlatılamazsa direkt auth ekranını göster
-  window.addEventListener("DOMContentLoaded", () => {
-    const l = document.getElementById("loader");
-    if (l) l.style.display = "none";
-    const a = document.getElementById("auth-wrap");
-    if (a) a.style.display = "flex";
-  });
-}
+firebase.initializeApp(firebaseConfig);
+auth = firebase.auth();
+db = firebase.firestore();
+db.settings({ experimentalForceLongPolling: true, merge: true });
 
 // ═══════════════════════════════════════════
 // STATE
@@ -509,50 +497,42 @@ const AVC = ["#0078d4","#107c10","#8764b8","#ca5010","#d13438","#008272","#005a9
 // ═══════════════════════════════════════════
 // AUTH STATE OBSERVER
 // ═══════════════════════════════════════════
-// Timeout fallback — loader kapanmazsa 5 saniye sonra zorla kapat
-setTimeout(() => {
-  const l = document.getElementById("loader");
-  if (l && l.style.opacity !== "0") {
-    console.warn("Timeout: forcing auth screen");
-    hideLoader();
-    showAuthScreen();
-  }
-}, 5000);
-
+// Auth state observer - loader gizli başladığından direkt çalışır
 auth.onAuthStateChanged(async fireUser => {
   try {
     if (fireUser) {
+      // Kullanıcı giriş yapmış - profili yükle
       const snap = await db.collection("users").doc(fireUser.uid).get();
       if (snap.exists) {
         CU = { id: fireUser.uid, ...snap.data() };
-        hideLoader();
+        showApp();
         bootApp();
       } else {
         await auth.signOut();
-        hideLoader();
         showAuthScreen();
       }
     } else {
-      hideLoader();
+      // Kullanıcı giriş yapmamış
       showAuthScreen();
     }
   } catch(e) {
     console.error("Auth error:", e);
-    hideLoader();
     showAuthScreen();
   }
 });
 
-function hideLoader() {
-  const l = document.getElementById("loader");
-  if (!l) return;
-  l.style.opacity = "0";
-  l.style.pointerEvents = "none";
-  setTimeout(() => { l.style.display = "none"; }, 300);
-}
 function showAuthScreen() {
   document.getElementById("auth-wrap").style.display = "flex";
   document.getElementById("app").style.display = "none";
+}
+function showApp() {
+  document.getElementById("auth-wrap").style.display = "none";
+  document.getElementById("app").style.display = "block";
+}
+function hideLoader() {
+  // Artık loader kullanılmıyor ama eski çağrılar için bırakıldı
+  const l = document.getElementById("loader");
+  if (l) l.style.display = "none";
 }
 
 // ═══════════════════════════════════════════
@@ -637,8 +617,6 @@ async function logout() {
 // BOOT APP
 // ═══════════════════════════════════════════
 async function bootApp() {
-  document.getElementById("auth-wrap").style.display = "none";
-  document.getElementById("app").style.display = "block";
   // Update lastLogin
   await db.collection("users").doc(CU.id).update({ lastLogin: new Date().toISOString() });
   // Load all users into cache
