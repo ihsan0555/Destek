@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tickets | ihsancelik.com IT Service Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="tickets">
+  <div class="background-gradient"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar glass-card">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="logo-inline">
+          <img src="assets/images/logo.svg" alt="ihsancelik.com Logo" />
+          <span>ihsancelik.com</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item" data-i18n="nav_dashboard">
+          Dashboard
+        </a>
+        <a href="tickets.html" class="nav-item active" data-i18n="nav_tickets">
+          My Tickets
+        </a>
+        <a href="#create" class="nav-item" data-i18n="nav_create_ticket">
+          Create Ticket
+        </a>
+        <a href="devices.html" class="nav-item" data-i18n="nav_devices">
+          My Devices
+        </a>
+        <a href="kb.html" class="nav-item" data-i18n="nav_kb">
+          Knowledge Base
+        </a>
+        <a href="#" class="nav-item" data-i18n="nav_profile">
+          Profile
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-ghost" id="logoutBtn" data-i18n="nav_logout">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+          <h1 data-i18n="tickets_title">My Tickets</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="language-toggle small">
+            <button data-lang="en" class="lang-btn active">EN</button>
+            <button data-lang="tr" class="lang-btn">TR</button>
+          </div>
+          <a href="#create" class="btn-primary" data-i18n="tickets_create_btn">
+            Create Ticket
+          </a>
+        </div>
+      </header>
+
+      <section class="content-grid tickets-layout">
+        <div class="card glass-card span-2">
+          <div class="card-header">
+            <h2 data-i18n="tickets_list_title">All Tickets</h2>
+            <div class="chip-group">
+              <button class="chip active" data-status-filter="all" data-i18n="filter_all">
+                All
+              </button>
+              <button class="chip" data-status-filter="Open" data-i18n="filter_open">
+                Open
+              </button>
+              <button class="chip" data-status-filter="In Progress" data-i18n="filter_in_progress">
+                In Progress
+              </button>
+              <button class="chip" data-status-filter="Waiting Customer" data-i18n="filter_waiting">
+                Waiting Customer
+              </button>
+              <button class="chip" data-status-filter="Resolved" data-i18n="filter_resolved">
+                Resolved
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th data-i18n="tickets_table_id">ID</th>
+                  <th data-i18n="tickets_table_title">Title</th>
+                  <th data-i18n="tickets_table_device">Device</th>
+                  <th data-i18n="tickets_table_priority">Priority</th>
+                  <th data-i18n="tickets_table_status">Status</th>
+                  <th data-i18n="tickets_table_updated">Updated</th>
+                </tr>
+              </thead>
+              <tbody id="ticketsTableBody">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card glass-card" id="create">
+          <div class="card-header">
+            <h2 data-i18n="tickets_create_title">Create New Ticket</h2>
+          </div>
+          <div class="card-body">
+            <form id="ticketForm" class="form-vertical">
+              <div class="form-group">
+                <label for="ticketTitle" data-i18n="ticket_field_title">Title</label>
+                <input type="text" id="ticketTitle" required />
+              </div>
+              <div class="form-group">
+                <label for="ticketDescription" data-i18n="ticket_field_description">Description</label>
+                <textarea id="ticketDescription" rows="4" required></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="ticketPriority" data-i18n="ticket_field_priority">Priority</label>
+                  <select id="ticketPriority" required>
+                    <option value="Low" data-i18n="priority_low">Low</option>
+                    <option value="Medium" selected data-i18n="priority_medium">Medium</option>
+                    <option value="High" data-i18n="priority_high">High</option>
+                    <option value="Critical" data-i18n="priority_critical">Critical</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="ticketDevice" data-i18n="ticket_field_device">Device</label>
+                  <select id="ticketDevice">
+                    <!-- Filled by JS from devices -->
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="ticketAttachment" data-i18n="ticket_field_attachments">Attachments</label>
+                <input type="file" id="ticketAttachment" multiple />
+                <p class="form-helper" data-i18n="ticket_field_attachments_helper">
+                  Attachments are simulated in this demo and are not actually uploaded.
+                </p>
+              </div>
+
+              <button type="submit" class="btn-primary btn-full" data-i18n="ticket_create_submit">
+                Submit Ticket
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Devices | ihsancelik.com IT Service Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="devices">
+  <div class="background-gradient"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar glass-card">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="logo-inline">
+          <img src="assets/images/logo.svg" alt="ihsancelik.com Logo" />
+          <span>ihsancelik.com</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item" data-i18n="nav_dashboard">
+          Dashboard
+        </a>
+        <a href="tickets.html" class="nav-item" data-i18n="nav_tickets">
+          My Tickets
+        </a>
+        <a href="tickets.html#create" class="nav-item" data-i18n="nav_create_ticket">
+          Create Ticket
+        </a>
+        <a href="devices.html" class="nav-item active" data-i18n="nav_devices">
+          My Devices
+        </a>
+        <a href="kb.html" class="nav-item" data-i18n="nav_kb">
+          Knowledge Base
+        </a>
+        <a href="#" class="nav-item" data-i18n="nav_profile">
+          Profile
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-ghost" id="logoutBtn" data-i18n="nav_logout">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+          <h1 data-i18n="devices_title">My Devices</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="language-toggle small">
+            <button data-lang="en" class="lang-btn active">EN</button>
+            <button data-lang="tr" class="lang-btn">TR</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="content-grid devices-layout">
+        <div class="card glass-card span-2">
+          <div class="card-header">
+            <h2 data-i18n="devices_table_title">Device Inventory</h2>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th data-i18n="device_table_name">Device</th>
+                  <th data-i18n="device_table_brand">Brand</th>
+                  <th data-i18n="device_table_model">Model</th>
+                  <th data-i18n="device_table_serial">Serial</th>
+                  <th data-i18n="device_table_ip">IP Address</th>
+                  <th data-i18n="device_table_warranty">Warranty</th>
+                </tr>
+              </thead>
+              <tbody id="devicesTableBody">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-header">
+            <h2 data-i18n="devices_detail_title">Device Details</h2>
+          </div>
+          <div class="card-body info-list" id="deviceDetailCard">
+            <p class="muted" data-i18n="devices_detail_placeholder">
+              Select a device from the table to view details.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
