@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket Detail — ihsancelik.com IT Portal</title>
+    <meta name="description" content="View ticket details, conversation, and update status" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+</head>
+
+<body>
+    <div class="bg-mesh"></div>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <div class="portal-layout">
+
+        <!-- ── SIDEBAR ──────────────────────────────────────────── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/images/logo.svg" class="sidebar-logo-img" alt="Logo" />
+                <div class="sidebar-logo-text">
+                    <div class="brand-name">ihsancelik.com</div>
+                    <div class="brand-sub" data-i18n="portal_sub">IT Service Portal</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <span class="nav-section-label" data-i18n="nav_main">Main</span>
+                <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span
+                        data-i18n="nav_dashboard">Dashboard</span></a>
+                <a href="tickets.html" class="nav-item active"><span class="nav-icon">🎫</span><span
+                        data-i18n="nav_tickets">My Tickets</span><span class="nav-badge" id="open-count">3</span></a>
+                <a href="#" class="nav-item" onclick="openCreateModal();return false"><span
+                        class="nav-icon">➕</span><span data-i18n="nav_create">Create Ticket</span></a>
+                <a href="devices.html" class="nav-item"><span class="nav-icon">💻</span><span data-i18n="nav_devices">My
+                        Devices</span></a>
+                <span class="nav-section-label" data-i18n="nav_support">Support</span>
+                <a href="knowledge.html" class="nav-item"><span class="nav-icon">📚</span><span
+                        data-i18n="nav_kb">Knowledge Base</span></a>
+                <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span
+                        data-i18n="nav_profile">Profile</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar" id="user-avatar-sidebar">DU</div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-name-sidebar">Demo User</div>
+                        <div class="user-role" data-i18n="role_customer">Customer</div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">🚪</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── MAIN ──────────────────────────────────────────────── -->
+        <div class="main-content">
+            <header class="topbar">
+                <button class="topbar-toggle" onclick="toggleSidebar()">☰</button>
+                <div style="display:flex;align-items:center;gap:8px;flex:1">
+                    <a href="tickets.html"
+                        style="color:var(--text-muted);font-size:0.85rem;display:flex;align-items:center;gap:4px">←
+                        <span data-i18n="nav_tickets">My Tickets</span></a>
+                    <span style="color:var(--text-muted)">/</span>
+                    <span class="topbar-title" id="topbar-ticket-id">Ticket #—</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+                    <button class="topbar-lang-btn" onclick="toggleLang()" id="lang-toggle">🇹🇷 Türkçe</button>
+                    <div class="topbar-notif">🔔<span class="notif-dot"></span></div>
+                </div>
+            </header>
+
+            <main class="page-body animate-fade-in" id="ticket-detail-body">
+                <!-- Loading -->
+                <div id="ticket-loading" style="text-align:center;padding:60px;color:var(--text-muted)">
+                    <div style="font-size:2rem" class="pulsing">🎫</div>
+                    <p style="margin-top:12px" data-i18n="loading">Loading ticket...</p>
+                </div>
+
+                <!-- Ticket content (hidden until loaded) -->
+                <div id="ticket-content" class="hidden">
+
+                    <!-- Header -->
+                    <div class="page-header">
+                        <div class="page-header-inner">
+                            <div style="flex:1">
+                                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+                                    <span id="detail-id"
+                                        style="font-size:0.85rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace"></span>
+                                    <span id="detail-status-badge"></span>
+                                    <span id="detail-priority-badge" class="badge"></span>
+                                </div>
+                                <h1 class="page-title" id="detail-title"></h1>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <select class="form-control" id="status-selector" onchange="changeStatus(this.value)"
+                                    style="width:auto">
+                                    <option value="open" data-i18n="status_open">Open</option>
+                                    <option value="progress" data-i18n="status_progress">In Progress</option>
+                                    <option value="waiting" data-i18n="status_waiting">Waiting Customer</option>
+                                    <option value="resolved" data-i18n="status_resolved">Resolved</option>
+                                </select>
+                                <button class="btn btn-danger btn-sm" onclick="closeTicket()"
+                                    data-i18n="close_ticket">Close Ticket</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meta Grid -->
+                    <div class="glass-card p-6" style="margin-bottom:20px">
+                        <div class="ticket-meta-grid" id="ticket-meta-grid">
+                            <!-- JS-injected -->
+                        </div>
+                    </div>
+
+                    <!-- Two-column layout -->
+                    <div style="display:grid;grid-template-columns:1fr 340px;gap:20px">
+
+                        <!-- Left: Conversation -->
+                        <div>
+                            <div class="glass-card p-6">
+                                <h2 class="section-title"><span class="section-icon">💬</span> <span
+                                        data-i18n="conversation">Conversation</span></h2>
+
+                                <div class="conversation" id="conversation-thread">
+                                    <!-- JS-injected -->
+                                </div>
+
+                                <!-- Reply Box -->
+                                <div class="reply-box"
+                                    style="margin-top:28px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06)">
+                                    <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:12px"
+                                        data-i18n="add_reply">Add Reply</h3>
+                                    <textarea class="form-control" id="reply-text" rows="4"
+                                        placeholder="Type your message..."></textarea>
+                                    <div class="reply-actions">
+                                        <label class="btn btn-ghost btn-sm" for="reply-file" style="cursor:pointer">📎
+                                            <span data-i18n="attach">Attach</span></label>
+                                        <input type="file" id="reply-file" class="hidden" />
+                                        <button class="btn btn-primary btn-sm" onclick="sendReply()">📤 <span
+                                                data-i18n="send_reply">Send Reply</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Ticket Info -->
+                        <div style="display:flex;flex-direction:column;gap:16px">
+
+                            <!-- Ticket Details -->
+                            <div class="glass-card p-6">
+                                <h3 class="section-title"><span class="section-icon">📋</span> <span
+                                        data-i18n="ticket_details">Ticket Details</span></h3>
+                                <div id="ticket-sidebar-info" style="display:flex;flex-direction:column;gap:12px">
+                                    <!-- JS-injected -->
+                                </div>
+                            </div>
+
+                            <!-- Related Device -->
+                            <div class="glass-card p-6" id="related-device-card">
+                                <h3 class="section-title"><span class="section-icon">💻</span> <span
+                                        data-i18n="related_device">Related Device</span></h3>
+                                <div id="related-device-info">
+                                    <!-- JS-injected -->
+                                </div>
+                            </div>
+
+                            <!-- Timeline -->
+                            <div class="glass-card p-6">
+                                <h3 class="section-title"><span class="section-icon">🕐</span> <span
+                                        data-i18n="timeline">Timeline</span></h3>
+                                <div id="ticket-timeline" style="display:flex;flex-direction:column;gap:10px">
+                                    <!-- JS-injected -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🎫 <span data-i18n="create_ticket_title">Create New Ticket</span></h2>
+                <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-ticket-form" onsubmit="submitTicket(event)" novalidate>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="ticket_title_label">Ticket Title *</label>
+                        <input type="text" class="form-control" id="new-title"
+                            placeholder="Brief description of your issue" required />
+                        <span class="form-error hidden" id="new-title-error">Title is required</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="description_label">Description *</label>
+                        <textarea class="form-control" id="new-desc" rows="4"
+                            placeholder="Describe the issue in detail..." required></textarea>
+                        <span class="form-error hidden" id="new-desc-error">Description is required</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label" data-i18n="priority_label">Priority</label>
+                            <select class="form-control" id="new-priority">
+                                <option value="low">🟢 Low</option>
+                                <option value="medium" selected>🟡 Medium</option>
+                                <option value="high">🟠 High</option>
+                                <option value="critical">🔴 Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label" data-i18n="device_label">Related Device</label>
+                            <select class="form-control" id="new-device">
+                                <option value="">Select device</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:16px">
+                        <label class="form-label" data-i18n="attachment_label">Attachment (optional)</label>
+                        <input type="file" class="form-control" id="new-file" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('create-modal')" data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="document.getElementById('create-ticket-form').requestSubmit()">🎫 <span
+                        data-i18n="submit_ticket">Submit Ticket</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>

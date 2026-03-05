@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile — ihsancelik.com IT Portal</title>
+    <meta name="description" content="Manage your IT portal profile, notification preferences and account settings" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+</head>
+
+<body>
+    <div class="bg-mesh"></div>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <div class="portal-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/images/logo.svg" class="sidebar-logo-img" alt="Logo" />
+                <div class="sidebar-logo-text">
+                    <div class="brand-name">ihsancelik.com</div>
+                    <div class="brand-sub" data-i18n="portal_sub">IT Service Portal</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <span class="nav-section-label" data-i18n="nav_main">Main</span>
+                <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span
+                        data-i18n="nav_dashboard">Dashboard</span></a>
+                <a href="tickets.html" class="nav-item"><span class="nav-icon">🎫</span><span data-i18n="nav_tickets">My
+                        Tickets</span><span class="nav-badge" id="open-count">3</span></a>
+                <a href="#" class="nav-item" onclick="openCreateModal();return false"><span
+                        class="nav-icon">➕</span><span data-i18n="nav_create">Create Ticket</span></a>
+                <a href="devices.html" class="nav-item"><span class="nav-icon">💻</span><span data-i18n="nav_devices">My
+                        Devices</span></a>
+                <span class="nav-section-label" data-i18n="nav_support">Support</span>
+                <a href="knowledge.html" class="nav-item"><span class="nav-icon">📚</span><span
+                        data-i18n="nav_kb">Knowledge Base</span></a>
+                <a href="profile.html" class="nav-item active"><span class="nav-icon">👤</span><span
+                        data-i18n="nav_profile">Profile</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar" id="user-avatar-sidebar">DU</div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-name-sidebar">Demo User</div>
+                        <div class="user-role" data-i18n="role_customer">Customer</div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">🚪</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="topbar">
+                <button class="topbar-toggle" onclick="toggleSidebar()">☰</button>
+                <span class="topbar-title" data-i18n="nav_profile">Profile</span>
+                <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+                    <button class="topbar-lang-btn" onclick="toggleLang()" id="lang-toggle">🇹🇷 Türkçe</button>
+                    <div class="topbar-notif">🔔<span class="notif-dot"></span></div>
+                </div>
+            </header>
+
+            <main class="page-body animate-fade-in">
+                <div class="page-header">
+                    <div class="page-header-inner">
+                        <div>
+                            <h1 class="page-title" data-i18n="profile_title">My Profile</h1>
+                            <p class="page-subtitle" data-i18n="profile_subtitle">Manage your account settings and
+                                preferences</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Header Card -->
+                <div class="glass-card profile-header-card" style="margin-bottom:24px">
+                    <div class="profile-avatar-lg" id="profile-avatar-text">DU</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profile-full-name">Demo User</div>
+                        <div class="profile-email" id="profile-email-display">demo@ihsancelik.com</div>
+                        <div style="display:flex;gap:8px;margin-top:10px">
+                            <span class="badge badge-blue" data-i18n="role_customer">Customer</span>
+                            <span class="badge badge-resolved" data-i18n="active_status">Active</span>
+                        </div>
+                    </div>
+                    <div style="margin-left:auto;display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+                        <div style="text-align:right">
+                            <div style="font-size:0.72rem;color:var(--text-muted)" data-i18n="member_since">Member Since
+                            </div>
+                            <div style="font-size:0.9rem;font-weight:600" id="member-since-date">March 2026</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-size:0.72rem;color:var(--text-muted)" data-i18n="total_tickets_label">Total
+                                Tickets</div>
+                            <div style="font-size:1.2rem;font-weight:800;color:var(--accent)" id="profile-ticket-count">
+                                16</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="profile-grid">
+
+                    <!-- Personal Info Form -->
+                    <div class="glass-card p-6">
+                        <h2 class="section-title"><span class="section-icon">📝</span> <span
+                                data-i18n="personal_info">Personal Information</span></h2>
+                        <form id="profile-form" onsubmit="saveProfile(event)" novalidate>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="first_name">First Name</label>
+                                    <input type="text" class="form-control" id="prof-first" value="Demo" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="last_name">Last Name</label>
+                                    <input type="text" class="form-control" id="prof-last" value="User" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="email_label">Email Address</label>
+                                <input type="email" class="form-control" id="prof-email" value="demo@ihsancelik.com" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="phone_label">Phone Number</label>
+                                <input type="tel" class="form-control" id="prof-phone"
+                                    placeholder="+90 5xx xxx xx xx" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="company_label">Company</label>
+                                <input type="text" class="form-control" id="prof-company"
+                                    placeholder="Your company name" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="department_label">Department</label>
+                                <input type="text" class="form-control" id="prof-dept" placeholder="e.g. IT, Finance" />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">💾 <span data-i18n="save_profile">Save
+                                    Profile</span></button>
+                        </form>
+                    </div>
+
+                    <!-- Settings -->
+                    <div style="display:flex;flex-direction:column;gap:16px">
+
+                        <!-- Language -->
+                        <div class="glass-card p-6">
+                            <h2 class="section-title"><span class="section-icon">🌍</span> <span
+                                    data-i18n="language_settings">Language</span></h2>
+                            <div style="display:flex;gap:10px">
+                                <button class="btn btn-primary btn-sm" id="lang-en-btn" onclick="setLang('en')"
+                                    style="flex:1">🇬🇧 English</button>
+                                <button class="btn btn-ghost btn-sm" id="lang-tr-btn" onclick="setLang('tr')"
+                                    style="flex:1">🇹🇷 Türkçe</button>
+                            </div>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="glass-card p-6">
+                            <h2 class="section-title"><span class="section-icon">🔔</span> <span
+                                    data-i18n="notifications">Notifications</span></h2>
+                            <div style="display:flex;flex-direction:column;gap:14px">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-size:0.875rem;color:var(--text-secondary)"
+                                        data-i18n="email_notif_setting">Email Notifications</span>
+                                    <label class="checkbox-wrap"><input type="checkbox" id="notif-email" checked /><span
+                                            class="checkbox-custom"></span></label>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-size:0.875rem;color:var(--text-secondary)"
+                                        data-i18n="ticket_update_notif">Ticket Updates</span>
+                                    <label class="checkbox-wrap"><input type="checkbox" id="notif-ticket"
+                                            checked /><span class="checkbox-custom"></span></label>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-size:0.875rem;color:var(--text-secondary)"
+                                        data-i18n="warranty_alerts">Warranty Alerts</span>
+                                    <label class="checkbox-wrap"><input type="checkbox" id="notif-warranty"
+                                            checked /><span class="checkbox-custom"></span></label>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-size:0.875rem;color:var(--text-secondary)"
+                                        data-i18n="news_updates">News & Updates</span>
+                                    <label class="checkbox-wrap"><input type="checkbox" id="notif-news" /><span
+                                            class="checkbox-custom"></span></label>
+                                </div>
+                            </div>
+                            <button class="btn btn-ghost btn-sm w-full" style="margin-top:16px"
+                                onclick="saveNotifPref()">💾 <span data-i18n="save_preferences">Save
+                                    Preferences</span></button>
+                        </div>
+
+                        <!-- Change Password -->
+                        <div class="glass-card p-6">
+                            <h2 class="section-title"><span class="section-icon">🔒</span> <span
+                                    data-i18n="change_password">Change Password</span></h2>
+                            <form onsubmit="changePassword(event)" novalidate>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="current_password">Current Password</label>
+                                    <input type="password" class="form-control" id="cur-pwd" placeholder="••••••••" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="new_password">New Password</label>
+                                    <input type="password" class="form-control" id="new-pwd" placeholder="••••••••" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="confirm_password">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirm-pwd"
+                                        placeholder="••••••••" />
+                                </div>
+                                <button type="submit" class="btn btn-accent w-full">🔑 <span
+                                        data-i18n="update_password">Update Password</span></button>
+                            </form>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="glass-card p-6" style="border-color:rgba(239,68,68,0.2)">
+                            <h2 class="section-title" style="color:#f87171"><span class="section-icon">⚠️</span> <span
+                                    data-i18n="danger_zone">Danger Zone</span></h2>
+                            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:14px"
+                                data-i18n="danger_zone_desc">These actions are irreversible. Please proceed with
+                                caution.</p>
+                            <button class="btn btn-danger w-full" onclick="confirmDelete()">🗑️ <span
+                                    data-i18n="delete_account">Delete Account</span></button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🎫 <span data-i18n="create_ticket_title">Create New Ticket</span></h2>
+                <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-ticket-form" onsubmit="submitTicket(event)" novalidate>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="ticket_title_label">Ticket Title *</label>
+                        <input type="text" class="form-control" id="new-title" required />
+                        <span class="form-error hidden" id="new-title-error">Title is required</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="description_label">Description *</label>
+                        <textarea class="form-control" id="new-desc" rows="4" required></textarea>
+                        <span class="form-error hidden" id="new-desc-error">Description is required</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label" data-i18n="priority_label">Priority</label>
+                            <select class="form-control" id="new-priority">
+                                <option value="low">🟢 Low</option>
+                                <option value="medium" selected>🟡 Medium</option>
+                                <option value="high">🟠 High</option>
+                                <option value="critical">🔴 Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label" data-i18n="device_label">Related Device</label>
+                            <select class="form-control" id="new-device">
+                                <option value="">Select device</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:16px">
+                        <label class="form-label" data-i18n="attachment_label">Attachment (optional)</label>
+                        <input type="file" class="form-control" id="new-file" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('create-modal')" data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="document.getElementById('create-ticket-form').requestSubmit()">🎫 <span
+                        data-i18n="submit_ticket">Submit Ticket</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="assets/js/app.js"></script>
+    <style>
+        @media(max-width:900px) {
+            .profile-grid {
+                grid-template-columns: 1fr !important
+            }
+        }
+    </style>
+</body>
+
+</html>

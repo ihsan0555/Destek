@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Knowledge Base — ihsancelik.com IT Portal</title>
+    <meta name="description" content="Browse IT knowledge base articles, tutorials and troubleshooting guides" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+</head>
+
+<body>
+    <div class="bg-mesh"></div>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <div class="portal-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/images/logo.svg" class="sidebar-logo-img" alt="Logo" />
+                <div class="sidebar-logo-text">
+                    <div class="brand-name">ihsancelik.com</div>
+                    <div class="brand-sub" data-i18n="portal_sub">IT Service Portal</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <span class="nav-section-label" data-i18n="nav_main">Main</span>
+                <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span
+                        data-i18n="nav_dashboard">Dashboard</span></a>
+                <a href="tickets.html" class="nav-item"><span class="nav-icon">🎫</span><span data-i18n="nav_tickets">My
+                        Tickets</span><span class="nav-badge" id="open-count">3</span></a>
+                <a href="#" class="nav-item" onclick="openCreateModal();return false"><span
+                        class="nav-icon">➕</span><span data-i18n="nav_create">Create Ticket</span></a>
+                <a href="devices.html" class="nav-item"><span class="nav-icon">💻</span><span data-i18n="nav_devices">My
+                        Devices</span></a>
+                <span class="nav-section-label" data-i18n="nav_support">Support</span>
+                <a href="knowledge.html" class="nav-item active"><span class="nav-icon">📚</span><span
+                        data-i18n="nav_kb">Knowledge Base</span></a>
+                <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span
+                        data-i18n="nav_profile">Profile</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar" id="user-avatar-sidebar">DU</div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-name-sidebar">Demo User</div>
+                        <div class="user-role" data-i18n="role_customer">Customer</div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">🚪</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="topbar">
+                <button class="topbar-toggle" onclick="toggleSidebar()">☰</button>
+                <span class="topbar-title" data-i18n="nav_kb">Knowledge Base</span>
+                <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+                    <button class="topbar-lang-btn" onclick="toggleLang()" id="lang-toggle">🇹🇷 Türkçe</button>
+                    <div class="topbar-notif">🔔<span class="notif-dot"></span></div>
+                </div>
+            </header>
+
+            <main class="page-body animate-fade-in">
+
+                <!-- Hero Search -->
+                <div class="glass-card"
+                    style="padding:40px;text-align:center;margin-bottom:28px;background:linear-gradient(135deg,rgba(37,99,235,0.1),rgba(34,211,238,0.05))">
+                    <h1 style="font-size:1.8rem;font-weight:800;margin-bottom:8px" data-i18n="kb_hero_title">How can we
+                        help?</h1>
+                    <p style="color:var(--text-secondary);margin-bottom:24px" data-i18n="kb_hero_sub">Browse our
+                        knowledge base or search for answers</p>
+                    <div class="search-input-wrap" style="max-width:520px;margin:0 auto">
+                        <span class="search-icon" style="font-size:1.1rem">🔍</span>
+                        <input type="text" class="form-control" id="kb-search"
+                            placeholder="Search articles, guides, troubleshooting..." oninput="searchKB(this.value)"
+                            style="padding:14px 14px 14px 44px;font-size:1rem" />
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <h2 class="section-title" style="margin-bottom:16px"><span class="section-icon">📂</span> <span
+                        data-i18n="browse_categories">Browse Categories</span></h2>
+                <div class="kb-grid" id="kb-categories">
+                    <!-- JS-injected -->
+                </div>
+
+                <!-- Popular Articles -->
+                <h2 class="section-title" style="margin:28px 0 16px"><span class="section-icon">⭐</span> <span
+                        data-i18n="popular_articles">Popular Articles</span></h2>
+                <div class="glass-card" style="overflow:hidden">
+                    <div id="kb-articles-list">
+                        <!-- JS-injected -->
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Article Modal -->
+    <div class="modal-overlay" id="article-modal">
+        <div class="modal" style="max-width:680px">
+            <div class="modal-header">
+                <h2 class="modal-title" id="article-modal-title">Article</h2>
+                <button class="modal-close" onclick="closeModal('article-modal')">✕</button>
+            </div>
+            <div class="modal-body" id="article-modal-body" style="line-height:1.8;color:var(--text-secondary)">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('article-modal')" data-i18n="close">Close</button>
+                <button class="btn btn-primary" onclick="openCreateModal()" data-i18n="still_need_help">Still Need Help?
+                    Create Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🎫 <span data-i18n="create_ticket_title">Create New Ticket</span></h2>
+                <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-ticket-form" onsubmit="submitTicket(event)" novalidate>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="ticket_title_label">Ticket Title *</label>
+                        <input type="text" class="form-control" id="new-title" required />
+                        <span class="form-error hidden" id="new-title-error">Title is required</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="description_label">Description *</label>
+                        <textarea class="form-control" id="new-desc" rows="4" required></textarea>
+                        <span class="form-error hidden" id="new-desc-error">Description is required</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label" data-i18n="priority_label">Priority</label>
+                            <select class="form-control" id="new-priority">
+                                <option value="low">🟢 Low</option>
+                                <option value="medium" selected>🟡 Medium</option>
+                                <option value="high">🟠 High</option>
+                                <option value="critical">🔴 Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label" data-i18n="device_label">Related Device</label>
+                            <select class="form-control" id="new-device">
+                                <option value="">Select device</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:16px">
+                        <label class="form-label" data-i18n="attachment_label">Attachment (optional)</label>
+                        <input type="file" class="form-control" id="new-file" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('create-modal')" data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary"
+                    onclick="document.getElementById('create-ticket-form').requestSubmit()">🎫 <span
+                        data-i18n="submit_ticket">Submit Ticket</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>

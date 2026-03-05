@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ihsancelik.com — IT Service Portal</title>
+    <meta name="description" content="ihsancelik.com IT Service Portal — Professional IT Support & Managed Services" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020617;
+            color: #f0f6ff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            text-align: center;
+            padding: 20px
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px
+        }
+
+        .brand {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #22D3EE);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .sub {
+            color: #64748b;
+            font-size: 0.9rem
+        }
+
+        .desc {
+            max-width: 420px;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #2563EB, #1d4ed8);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35)
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5)
+        }
+
+        .features {
+            display: flex;
+            gap: 24px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            justify-content: center
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            font-size: 0.85rem;
+            color: #94a3b8
+        }
+
+        .feature span {
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 6px
+        }
+
+        .mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse 80% 50% at 10% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 90% 80%, rgba(34, 211, 238, 0.06) 0%, transparent 60%)
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mesh"></div>
+    <div class="content">
+        <div>
+            <div class="logo-wrap">
+                <img src="assets/images/logo.svg" width="56" height="56" alt="Logo" />
+                <div>
+                    <div class="brand">ihsancelik.com</div>
+                    <div class="sub">IT Service Portal</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="desc">
+            Professional IT Support & Managed Services Portal.<br />
+            Manage your tickets, track your devices, and get fast IT support.
+        </p>
+
+        <a href="login.html" class="btn">🚀 Launch Portal</a>
+
+        <div class="features">
+            <div class="feature"><span>🎫</span>Ticket System</div>
+            <div class="feature"><span>💻</span>Device Manager</div>
+            <div class="feature"><span>📊</span>Dashboard</div>
+            <div class="feature"><span>💬</span>Live Support</div>
+        </div>
+
+        <p style="color:#334155;font-size:0.75rem">© 2026 ihsancelik.com — All rights reserved</p>
+    </div>
+</body>
+
+</html>
