@@ -1,0 +1,1592 @@
+<!--
+KURULUM:
+1. Bu dosyayı index.html olarak GitHub reposuna yükleyin
+2. GitHub Pages'i etkinleştirin (Settings > Pages > Branch: main)
+3. Firebase Console > Authentication > Sign-in method > Email/Password: Etkinleştir
+4. Firebase Console > Firestore Database > Kurallar > yukarıdaki güvenlik kurallarını yapıştırın
+5. Siteye gidin > "Hesap oluştur" ile admin@ihsancelik.com hesabı oluşturun
+6. Firebase Console > Firestore > users koleksiyonu > hesabı bulun > role: "admin" yapın
+7. Tekrar giriş yapın
+
+YEREL TEST (GitHub'a yüklemeden denemek için):
+- index.html dosyasini cift tiklayip file:// ile acmayin; Firebase calismaz.
+- Bu klasorde "Yerel sunucu baslat.bat" dosyasini calistirin, tarayicida http://localhost:8080 acilacak.
+- ÖNEMLİ: "auth/requests-from-referer-http://localhost:8080-are-blocked" hatası alıyorsanız:
+  Firebase Console > Authentication > Ayarlar (Settings) > Yetkili alan adları (Authorized domains) > "Alan adı ekle" > localhost yazıp kaydedin. Sonra sayfayı yenileyip tekrar giriş yapın.
+- Hesap olusturup giris yapin. Yonetici: admin@ihsancelik.com ile giris yapın (rol otomatik admin olur).
+-->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ihsancelik.com IT Destek Portalı</title>
+  <style>
+    :root {
+      --blue: #0078d4;
+      --blue-dk: #005a9e;
+      --blue-lt: #deecf9;
+      --green: #107c10;
+      --green-lt: #dff6dd;
+      --red: #d13438;
+      --red-lt: #fde7e9;
+      --orange: #ca5010;
+      --orange-lt: #fdf3d0;
+      --purple: #8764b8;
+      --purple-lt: #f4f0fb;
+      --bg: #f3f2f1;
+      --s-bg: #1b1b2e;
+      --t1: #323130;
+      --t2: #605e5c;
+      --t3: #a19f9d;
+      --br: #edebe9;
+      --br-dk: #c8c6c4;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); color: var(--t1); background: var(--bg); min-height: 100vh; }
+    #auth-wrap {
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #1b1b2e 0%, #2d2d44 100%);
+    }
+    #app { display: none; min-height: 100vh; }
+    .auth-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 400px;
+      padding: 32px;
+    }
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--s-bg);
+    }
+    .auth-logo span { font-size: 2rem; }
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--br);
+    }
+    .auth-tabs button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--t2);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .auth-tabs button.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    .auth-tabs button:hover { color: var(--t1); }
+    .auth-form label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+      color: var(--t2);
+    }
+    .auth-form input, .auth-form select {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      border: 1px solid var(--br);
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .auth-form input:focus, .auth-form select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px var(--blue-lt);
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.2s;
+    }
+    .btn-prim { background: var(--blue); color: #fff; width: 100%; }
+    .btn-prim:hover { background: var(--blue-dk); }
+    .btn-sec { background: var(--br); color: var(--t1); }
+    .btn-sec:hover { background: var(--br-dk); }
+    .auth-form .hint {
+      font-size: 0.8rem;
+      color: var(--t3);
+      margin-top: 12px;
+      text-align: center;
+    }
+    .auth-form a {
+      color: var(--blue);
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+    .auth-form a:hover { text-decoration: underline; }
+    .auth-err {
+      background: var(--red-lt);
+      color: var(--red);
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .auth-err.on { display: block; }
+    .row-2 { display: flex; gap: 12px; }
+    .row-2 > * { flex: 1; }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--s-bg);
+      color: #fff;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .sidebar-brand {
+      padding: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-nav { padding: 12px 0; }
+    .nav-group { margin-bottom: 16px; }
+    .nav-group-title {
+      padding: 8px 20px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.5);
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: rgba(255,255,255,0.9);
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: var(--font);
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-link.on { background: var(--blue); color: #fff; }
+    .nav-link .badge-nav {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .nav-link .badge-nav.green { background: var(--green); }
+    .header {
+      position: fixed;
+      top: 0;
+      left: 240px;
+      right: 0;
+      height: 48px;
+      background: #fff;
+      border-bottom: 1px solid var(--br);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 90;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .menu-toggle {
+      display: none;
+      border: none;
+      background: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .header-title { font-weight: 600; font-size: 1rem; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .header-admin-link { color: var(--blue); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 6px 12px; border-radius: 4px; }
+    .header-admin-link:hover { background: var(--blue-lt); }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: none;
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      font-size: 1.2rem;
+    }
+    .icon-btn:hover { background: var(--bg); }
+    .icon-btn .dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 8px;
+      height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+      display: none;
+    }
+    .icon-btn.has-dot .dot { display: block; }
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .user-menu:hover { background: var(--bg); }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .main {
+      margin-left: 240px;
+      padding-top: 48px;
+      min-height: 100vh;
+      padding: calc(48px + 24px) 24px 24px 24px;
+    }
+    .pg { display: none; }
+    .pg.on { display: block; }
+    .pg h1 { font-size: 1.5rem; margin-bottom: 20px; color: var(--t1); }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--br);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-body { padding: 20px; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-box {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .stat-box .val { font-size: 1.75rem; font-weight: 700; color: var(--t1); }
+    .stat-box .lbl { font-size: 0.85rem; color: var(--t2); margin-top: 4px; }
+    .stat-box.blue .val { color: var(--blue); }
+    .stat-box.green .val { color: var(--green); }
+    .stat-box.orange .val { color: var(--orange); }
+    .stat-box.red .val { color: var(--red); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--br); }
+    th { background: var(--bg); font-weight: 600; font-size: 0.85rem; color: var(--t2); }
+    tr:hover td { background: #fafafa; }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .b-open { background: var(--blue-lt); color: var(--blue-dk); }
+    .b-prog { background: var(--orange-lt); color: var(--orange); }
+    .b-res { background: var(--green-lt); color: var(--green); }
+    .b-cls { background: var(--br); color: var(--t2); }
+    .b-wait { background: var(--purple-lt); color: var(--purple); }
+    .pr { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; }
+    .pr-l { background: var(--green-lt); color: var(--green); }
+    .pr-m { background: var(--orange-lt); color: var(--orange); }
+    .pr-h { background: var(--red-lt); color: var(--red); }
+    .pr-c { background: var(--red); color: #fff; }
+    .cat-tag { display: inline-block; padding: 4px 10px; background: var(--purple-lt); color: var(--purple); border-radius: 4px; font-size: 0.8rem; }
+    .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+    .ticket-row { cursor: pointer; }
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-bar select {
+      padding: 8px 12px;
+      border: 1px solid var(--br);
+      border-radius: 4px;
+      font-size: 0.9rem;
+      min-width: 140px;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--br);
+      margin-bottom: 16px;
+    }
+    .tabs button {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--t2);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tabs button.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    .tabs button:hover { color: var(--t1); }
+    .chart-bar-wrap { margin: 8px 0; }
+    .chart-bar {
+      height: 24px;
+      background: var(--br);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .chart-bar-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .chart-bar-lbl { font-size: 0.85rem; color: var(--t2); }
+    .activity-item {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--br);
+      font-size: 0.9rem;
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item time { color: var(--t3); font-size: 0.8rem; }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--t3);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.on { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      max-width: 560px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--br);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-head h2 { font-size: 1.2rem; }
+    .modal-close {
+      border: none;
+      background: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--t2);
+      line-height: 1;
+    }
+    .modal-body { padding: 20px; }
+    .modal-foot {
+      padding: 16px 20px;
+      border-top: 1px solid var(--br);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 4px; font-size: 0.9rem; color: var(--t2); }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--br);
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: var(--font);
+    }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .comment-list { margin-top: 16px; }
+    .comment-item {
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    .comment-item .meta { font-size: 0.8rem; color: var(--t3); margin-bottom: 4px; }
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      padding: 12px 20px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      animation: toastIn 0.3s ease;
+    }
+    .toast.s { background: var(--green); }
+    .toast.e { background: var(--red); }
+    .toast.w { background: var(--orange); }
+    .toast.i { background: var(--blue); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .team-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .team-card .name { font-weight: 600; margin-bottom: 4px; }
+    .team-card .role { font-size: 0.85rem; color: var(--t2); }
+    .team-card .stats { margin-top: 12px; font-size: 0.85rem; color: var(--t3); }
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--br);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: var(--br-dk);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      border: none;
+    }
+    .toggle.on { background: var(--blue); }
+    .toggle::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+    }
+    .toggle.on::after { left: 22px; }
+    .notif-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--br);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .notif-item:hover { background: var(--bg); }
+    .notif-item.unread { background: var(--blue-lt); }
+    .notif-item .icon { font-size: 1.2rem; }
+    .notif-item .body { flex: 1; font-size: 0.9rem; }
+    .notif-item .time { font-size: 0.8rem; color: var(--t3); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.2s; }
+      .sidebar.open { transform: translateX(0); }
+      .header { left: 0; }
+      .main { margin-left: 0; }
+      .menu-toggle { display: block; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo"><span>&#128304;</span> <strong>ihsancelik</strong>.com IT</div>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="user">Kullanıcı</button>
+        <button type="button" class="auth-tab" data-tab="staff">Yönetici / Personel</button>
+      </div>
+      <div id="auth-err" class="auth-err"></div>
+      <form id="login-form" class="auth-form">
+        <label>E-posta</label>
+        <input type="email" id="login-email" required placeholder="ornek@firma.com">
+        <label>Şifre</label>
+        <input type="password" id="login-pwd" required>
+        <button type="submit" class="btn btn-prim">Giriş Yap</button>
+        <p class="hint">Admin: admin@ihsancelik.com / Admin@2026</p>
+        <a href="#" id="go-register">Hesap oluştur &rarr;</a>
+      </form>
+      <form id="register-form" class="auth-form" style="display:none;">
+        <label>Ad</label>
+        <input type="text" id="reg-fn" required>
+        <label>Soyad</label>
+        <input type="text" id="reg-ln" required>
+        <label>E-posta</label>
+        <input type="email" id="reg-email" required>
+        <label>Departman</label>
+        <select id="reg-dept">
+          <option value="Genel">Genel</option>
+          <option value="Muhasebe">Muhasebe</option>
+          <option value="IT">IT</option>
+          <option value="İnsan Kaynakları">İnsan Kaynakları</option>
+          <option value="Satış">Satış</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+        <label>Şifre</label>
+        <input type="password" id="reg-pwd" required minlength="6">
+        <label>Şifre Tekrar</label>
+        <input type="password" id="reg-pwd2" required minlength="6">
+        <button type="submit" class="btn btn-prim">Kayıt Ol</button>
+        <a href="#" id="go-login">&larr; Girişe dön</a>
+      </form>
+    </div>
+  </div>
+
+  <div id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">&#128304; IT Destek</div>
+      <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    </aside>
+    <header class="header">
+      <div class="header-left">
+        <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Menü">&#9776;</button>
+        <span class="header-title" id="header-title">Dashboard</span>
+      </div>
+      <div class="header-actions">
+        <a href="#" id="header-admin-link" class="header-admin-link" style="display:none;">Yönetici Paneli</a>
+        <button type="button" class="icon-btn" id="btn-notifs" title="Bildirimler">
+          &#128276;<span class="dot" id="notif-dot"></span>
+        </button>
+        <div class="user-menu" id="user-menu">
+          <span class="avatar" id="user-avatar">?</span>
+          <span id="user-name">Kullanıcı</span>
+        </div>
+      </div>
+    </header>
+    <main class="main">
+      <div id="pg-dashboard" class="pg on">
+        <h1>Dashboard</h1>
+        <div class="stats-row" id="dash-stats"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head">Son Talepler</div>
+            <div class="card-body">
+              <div id="dash-tickets"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">Son Aktiviteler</div>
+            <div class="card-body">
+              <div id="dash-activity"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">Haftalık Özet</div>
+          <div class="card-body" id="dash-weekly"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">Kategori Dağılımı</div>
+          <div class="card-body" id="dash-cats"></div>
+        </div>
+      </div>
+      <div id="pg-tickets" class="pg">
+        <h1>Tüm Ticketlar</h1>
+        <div class="tabs" id="ticket-tabs"></div>
+        <div class="filter-bar">
+          <select id="filter-priority"><option value="">Tüm öncelikler</option><option value="Düşük">Düşük</option><option value="Orta">Orta</option><option value="Yüksek">Yüksek</option><option value="Kritik">Kritik</option></select>
+          <select id="filter-cat"><option value="">Tüm kategoriler</option><option value="Donanım">Donanım</option><option value="Yazılım">Yazılım</option><option value="Ağ">Ağ</option><option value="E-posta">E-posta</option><option value="Güvenlik">Güvenlik</option><option value="Diğer">Diğer</option></select>
+          <button type="button" class="btn btn-sec btn-sm" id="filter-clear">Temizle</button>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div id="tickets-table-wrap"></div>
+          </div>
+        </div>
+      </div>
+      <div id="pg-my" class="pg">
+        <h1 id="pg-my-title">Taleplerim</h1>
+        <div class="card">
+          <div class="card-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Ticketlar</span>
+            <button type="button" class="btn btn-prim btn-sm" id="btn-new-ticket">Yeni Talep</button>
+          </div>
+          <div class="card-body">
+            <div id="my-tickets-wrap"></div>
+          </div>
+        </div>
+      </div>
+      <div id="pg-notifs" class="pg">
+        <h1>Bildirimler</h1>
+        <div class="card">
+          <div class="card-head" style="display:flex;justify-content:space-between;">
+            <span>Bildirimler</span>
+            <button type="button" class="btn btn-sec btn-sm" id="mark-all-read">Tümünü okundu işaretle</button>
+          </div>
+          <div class="card-body" id="notifs-list"></div>
+        </div>
+      </div>
+      <div id="pg-reports" class="pg">
+        <h1>Raporlar</h1>
+        <div class="stats-row" id="reports-stats"></div>
+        <div class="card">
+          <div class="card-head">Aylık Trend</div>
+          <div class="card-body" id="reports-monthly"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">Öncelik Dağılımı</div>
+          <div class="card-body" id="reports-priority"></div>
+        </div>
+      </div>
+      <div id="pg-admin" class="pg">
+        <h1>Admin Panel</h1>
+        <div class="tabs">
+          <button type="button" class="admin-tab active" data-tab="users">Kullanıcılar</button>
+          <button type="button" class="admin-tab" data-tab="team">Ekip</button>
+          <button type="button" class="admin-tab" data-tab="settings">Ayarlar</button>
+        </div>
+        <div id="admin-users" class="admin-pane">
+          <div class="card">
+            <div class="card-body" id="admin-users-list"></div>
+          </div>
+        </div>
+        <div id="admin-team" class="admin-pane" style="display:none;">
+          <div class="grid-cards" id="admin-team-cards"></div>
+        </div>
+        <div id="admin-settings" class="admin-pane" style="display:none;">
+          <div class="card">
+            <div class="card-body" id="admin-settings-list"></div>
+          </div>
+        </div>
+      </div>
+      <div id="pg-profile" class="pg">
+        <h1>Profil ve Ayarlar</h1>
+        <div class="card">
+          <div class="card-body">
+            <form id="profile-form">
+              <div class="form-group">
+                <label>Ad Soyad</label>
+                <input type="text" id="profile-name" required>
+              </div>
+              <div class="form-group">
+                <label>Departman</label>
+                <input type="text" id="profile-dept">
+              </div>
+              <button type="submit" class="btn btn-prim">Kaydet</button>
+            </form>
+            <hr style="margin:24px 0;border:none;border-top:1px solid var(--br);">
+            <h3 style="margin-bottom:12px;">Şifre Değiştir</h3>
+            <form id="pwd-form">
+              <div class="form-group">
+                <label>Mevcut şifre</label>
+                <input type="password" id="pwd-current" required>
+              </div>
+              <div class="form-group">
+                <label>Yeni şifre</label>
+                <input type="password" id="pwd-new" required minlength="6">
+              </div>
+              <div class="form-group">
+                <label>Yeni şifre tekrar</label>
+                <input type="password" id="pwd-new2" required minlength="6">
+              </div>
+              <button type="submit" class="btn btn-sec">Şifreyi Güncelle</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="ov-new">
+    <div class="modal">
+      <div class="modal-head"><h2>Yeni Talep</h2><button type="button" class="modal-close" data-close="ov-new">&times;</button></div>
+      <form id="new-ticket-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Başlık</label>
+            <input type="text" id="new-tk-title" required>
+          </div>
+          <div class="form-group">
+            <label>Kategori</label>
+            <select id="new-tk-cat">
+              <option value="Donanım">Donanım</option>
+              <option value="Yazılım">Yazılım</option>
+              <option value="Ağ">Ağ</option>
+              <option value="E-posta">E-posta</option>
+              <option value="Güvenlik">Güvenlik</option>
+              <option value="Diğer">Diğer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Öncelik</label>
+            <select id="new-tk-pr">
+              <option value="Düşük">Düşük</option>
+              <option value="Orta" selected>Orta</option>
+              <option value="Yüksek">Yüksek</option>
+              <option value="Kritik">Kritik</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Açıklama</label>
+            <textarea id="new-tk-desc"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-sec" data-close="ov-new">İptal</button>
+          <button type="submit" class="btn btn-prim">Oluştur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="ov-tk">
+    <div class="modal" style="max-width:640px;">
+      <div class="modal-head"><h2 id="ov-tk-title">Talep Detayı</h2><button type="button" class="modal-close" data-close="ov-tk">&times;</button></div>
+      <div class="modal-body" id="ov-tk-body"></div>
+      <div class="modal-foot" id="ov-tk-foot"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="ov-eu">
+    <div class="modal">
+      <div class="modal-head"><h2>Kullanıcı Düzenle</h2><button type="button" class="modal-close" data-close="ov-eu">&times;</button></div>
+      <form id="edit-user-form">
+        <input type="hidden" id="eu-uid">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Ad Soyad</label>
+            <input type="text" id="eu-name" required>
+          </div>
+          <div class="form-group">
+            <label>Rol</label>
+            <select id="eu-role">
+              <option value="user">Kullanıcı</option>
+              <option value="staff">Personel</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Aktif</label>
+            <button type="button" class="toggle" id="eu-active"></button>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-sec" data-close="ov-eu">İptal</button>
+          <button type="submit" class="btn btn-prim">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+  (function() {
+    var firebaseConfig = {
+      apiKey: "AIzaSyBrvXjyki5TOeqW_kp88LD9E5kPv2dMvTg",
+      authDomain: "ihsancelik-destek.firebaseapp.com",
+      projectId: "ihsancelik-destek",
+      storageBucket: "ihsancelik-destek.firebasestorage.app",
+      messagingSenderId: "735030581861",
+      appId: "1:735030581861:web:0658649dbacb68e70b848c"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var auth = firebase.auth();
+    var db = firebase.firestore();
+    db.settings({ experimentalForceLongPolling: true, experimentalAutoDetectLongPolling: false });
+
+    var CU = null;
+    var TICKETS = [];
+    var USERS = [];
+    var NOTIFS = [];
+    var authTab = "user";
+    var STATUS_LABELS = { open: "Açık", progress: "İşlemde", resolved: "Çözüldü", closed: "Kapalı", waiting: "Beklemede" };
+    var PR_CLASS = { "Düşük": "pr-l", "Orta": "pr-m", "Yüksek": "pr-h", "Kritik": "pr-c" };
+    var CATS = ["Donanım", "Yazılım", "Ağ", "E-posta", "Güvenlik", "Diğer"];
+
+    function showApp() {
+      document.getElementById("auth-wrap").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    }
+    function showAuthScreen() {
+      document.getElementById("auth-wrap").style.display = "flex";
+      document.getElementById("app").style.display = "none";
+      CU = null;
+    }
+    function showAuthErr(msg) {
+      var el = document.getElementById("auth-err");
+      el.textContent = msg || "";
+      el.classList.toggle("on", !!msg);
+    }
+    function toast(msg, type) {
+      type = type || "i";
+      var c = document.getElementById("toast-container");
+      var t = document.createElement("div");
+      t.className = "toast " + type;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(function() { if (t.parentNode) c.removeChild(t); }, 3000);
+    }
+    function openModal(id) { document.getElementById(id).classList.add("on"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("on"); }
+    function genId() {
+      var s = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      var out = "";
+      for (var i = 0; i < 6; i++) out += s.charAt(Math.floor(Math.random() * s.length));
+      return "TK-" + out;
+    }
+    function initCol() {
+      var c = "0123456789abcdef";
+      var h = "#";
+      for (var i = 0; i < 6; i++) h += c.charAt(Math.floor(Math.random() * 16));
+      return h;
+    }
+    function ini(name) {
+      var parts = (name || "").trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+      return (name || "?").charAt(0).toUpperCase();
+    }
+
+    document.querySelectorAll(".modal-close, [data-close]").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var id = btn.getAttribute("data-close");
+        if (id) closeModal(id);
+      });
+    });
+    document.querySelectorAll(".modal-backdrop").forEach(function(backdrop) {
+      backdrop.addEventListener("click", function(e) {
+        if (e.target === backdrop) closeModal(backdrop.id);
+      });
+    });
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".modal-backdrop.on").forEach(function(m) { closeModal(m.id); });
+      }
+    });
+
+    document.querySelectorAll(".auth-tab").forEach(function(t) {
+      t.addEventListener("click", function() {
+        document.querySelectorAll(".auth-tab").forEach(function(x) { x.classList.remove("active"); });
+        t.classList.add("active");
+        authTab = t.getAttribute("data-tab");
+        showAuthErr("");
+      });
+    });
+    document.getElementById("go-register").addEventListener("click", function(e) {
+      e.preventDefault();
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("register-form").style.display = "block";
+      showAuthErr("");
+    });
+    document.getElementById("go-login").addEventListener("click", function(e) {
+      e.preventDefault();
+      document.getElementById("register-form").style.display = "none";
+      document.getElementById("login-form").style.display = "block";
+      showAuthErr("");
+    });
+    document.getElementById("login-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var email = document.getElementById("login-email").value.trim();
+      var pwd = document.getElementById("login-pwd").value;
+      showAuthErr("");
+      auth.signInWithEmailAndPassword(email, pwd).then(function() {
+        showAuthErr("");
+      }).catch(function(err) {
+        showAuthErr(err.message || "Giriş başarısız.");
+      });
+    });
+    document.getElementById("register-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var fn = document.getElementById("reg-fn").value.trim();
+      var ln = document.getElementById("reg-ln").value.trim();
+      var email = document.getElementById("reg-email").value.trim();
+      var dept = document.getElementById("reg-dept").value;
+      var pwd = document.getElementById("reg-pwd").value;
+      var pwd2 = document.getElementById("reg-pwd2").value;
+      showAuthErr("");
+      if (pwd !== pwd2) { showAuthErr("Şifreler eşleşmiyor."); return; }
+      auth.createUserWithEmailAndPassword(email, pwd).then(function(cred) {
+        var uid = cred.user.uid;
+        var name = fn + " " + ln;
+        var data = {
+          email: email,
+          name: name,
+          fn: fn,
+          ln: ln,
+          role: "user",
+          dept: dept,
+          ini: ini(name),
+          col: initCol(),
+          active: true,
+          created: new Date().toISOString(),
+          lastLogin: null
+        };
+        return db.collection("users").doc(uid).set(data);
+      }).then(function() {
+        toast("Hesap oluşturuldu. Giriş yapılıyor...", "s");
+        showAuthErr("");
+      }).catch(function(err) {
+        showAuthErr(err.message || "Kayıt başarısız.");
+      });
+    });
+
+    auth.onAuthStateChanged(function(fireUser) {
+      if (fireUser) {
+        db.collection("users").doc(fireUser.uid).get().then(function(snap) {
+          if (snap.exists) {
+            CU = Object.assign({ id: fireUser.uid }, snap.data());
+            CU.email = (CU.email || (fireUser.email || "") || "").toString().trim();
+            CU.role = (CU.role || "user").toString().toLowerCase();
+            var isAdminEmail = (CU.email || "").toLowerCase() === "admin@ihsancelik.com";
+            if (isAdminEmail) {
+              CU.role = "admin";
+              db.collection("users").doc(fireUser.uid).update({ role: "admin" }).catch(function() {});
+            }
+            if (authTab === "staff" && CU.role === "user") {
+              auth.signOut().then(function() {
+                showAuthErr("Bu hesap yönetici/personel değil.");
+                showAuthScreen();
+              });
+              return;
+            }
+            db.collection("users").doc(fireUser.uid).update({ lastLogin: new Date().toISOString() }).catch(function() {});
+            showApp();
+            bootApp();
+          } else {
+            auth.signOut();
+            showAuthScreen();
+          }
+        }).catch(function(e) {
+          console.error("Auth error:", e);
+          showAuthScreen();
+        });
+      } else {
+        showAuthScreen();
+      }
+    });
+
+    function buildNav() {
+      var nav = document.getElementById("sidebar-nav");
+      var html = "";
+      html += '<div class="nav-group"><div class="nav-group-title">Ana Menü</div>';
+      html += '<button type="button" class="nav-link on" data-page="pg-dashboard">&#128202; Dashboard</button>';
+      var cuRole = (CU.role || "").toString().toLowerCase();
+      if (cuRole === "admin" || cuRole === "staff") {
+        var openCount = TICKETS.filter(function(t) { return t.status === "open"; }).length;
+        html += '<button type="button" class="nav-link" data-page="pg-tickets">&#127915; Tüm Ticketlar<span class="badge-nav">' + openCount + '</span></button>';
+      }
+      var myLabel = cuRole === "user" ? "Taleplerim" : "Bana Atananlar";
+      var myCount = CU.role === "user"
+        ? TICKETS.filter(function(t) { return t.createdBy === CU.id; }).length
+        : TICKETS.filter(function(t) { return t.assignedTo === CU.id && t.status !== "resolved" && t.status !== "closed"; }).length;
+      html += '<button type="button" class="nav-link" data-page="pg-my">&#128203; ' + myLabel + '<span class="badge-nav green">' + myCount + '</span></button>';
+      html += '</div><div class="nav-group"><div class="nav-group-title">Araçlar</div>';
+      html += '<button type="button" class="nav-link" data-page="pg-notifs">&#128276; Bildirimler</button>';
+      if (cuRole === "admin" || cuRole === "staff") {
+        html += '<button type="button" class="nav-link" data-page="pg-reports">&#128200; Raporlar</button>';
+      }
+      html += '</div><div class="nav-group"><div class="nav-group-title">Yönetim</div>';
+      if (cuRole === "admin") {
+        html += '<button type="button" class="nav-link" data-page="pg-admin">&#9881; Admin Panel</button>';
+      }
+      html += '</div><div class="nav-group"><div class="nav-group-title">Hesap</div>';
+      html += '<button type="button" class="nav-link" data-page="pg-profile">&#128100; Profil & Ayarlar</button>';
+      html += '<button type="button" class="nav-link" id="nav-logout">&#8617; Çıkış Yap</button>';
+      html += '</div>';
+      nav.innerHTML = html;
+      nav.querySelectorAll("[data-page]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          var page = btn.getAttribute("data-page");
+          nav.querySelectorAll(".nav-link").forEach(function(x) { x.classList.remove("on"); });
+          btn.classList.add("on");
+          document.querySelectorAll(".pg").forEach(function(p) { p.classList.remove("on"); });
+          var pg = document.getElementById(page);
+          if (pg) pg.classList.add("on");
+          var titles = { "pg-dashboard": "Dashboard", "pg-tickets": "Tüm Ticketlar", "pg-my": myLabel, "pg-notifs": "Bildirimler", "pg-reports": "Raporlar", "pg-admin": "Admin Panel", "pg-profile": "Profil" };
+          document.getElementById("header-title").textContent = titles[page] || "Portal";
+          if (page === "pg-my") document.getElementById("pg-my-title").textContent = myLabel;
+          if (page === "pg-dashboard") renderDashboard();
+          if (page === "pg-tickets") renderTicketsPage();
+          if (page === "pg-my") renderMyTickets();
+          if (page === "pg-notifs") renderNotifs();
+          if (page === "pg-reports") renderReports();
+          if (page === "pg-admin") renderAdmin();
+          if (page === "pg-profile") renderProfile();
+          document.getElementById("sidebar").classList.remove("open");
+        });
+      });
+      var logoutBtn = document.getElementById("nav-logout");
+      if (logoutBtn) logoutBtn.addEventListener("click", function() { auth.signOut(); });
+    }
+
+    function getUser(uid) {
+      for (var i = 0; i < USERS.length; i++) if (USERS[i].id === uid) return USERS[i];
+      return { name: "?", email: "" };
+    }
+    function ticketStatusClass(s) {
+      var map = { open: "b-open", progress: "b-prog", resolved: "b-res", closed: "b-cls", waiting: "b-wait" };
+      return map[s] || "b-open";
+    }
+
+    function renderDashboard() {
+      var open = TICKETS.filter(function(t) { return t.status === "open"; }).length;
+      var progress = TICKETS.filter(function(t) { return t.status === "progress"; }).length;
+      var resolved = TICKETS.filter(function(t) { return t.status === "resolved"; }).length;
+      var critical = TICKETS.filter(function(t) { return t.pr === "Kritik" && t.status !== "resolved" && t.status !== "closed"; }).length;
+      document.getElementById("dash-stats").innerHTML =
+        '<div class="stat-box blue"><div class="val">' + open + '</div><div class="lbl">Açık</div></div>' +
+        '<div class="stat-box orange"><div class="val">' + progress + '</div><div class="lbl">İşlemde</div></div>' +
+        '<div class="stat-box green"><div class="val">' + resolved + '</div><div class="lbl">Çözüldü</div></div>' +
+        '<div class="stat-box red"><div class="val">' + critical + '</div><div class="lbl">Kritik</div></div>';
+      var list = TICKETS.slice().sort(function(a, b) {
+        var at = a.updated && a.updated.toDate ? a.updated.toDate() : (a.created && a.created.toDate ? a.created.toDate() : new Date(0));
+        var bt = b.updated && b.updated.toDate ? b.updated.toDate() : (b.created && b.created.toDate ? b.created.toDate() : new Date(0));
+        return bt - at;
+      }).slice(0, 5);
+      var tbl = "";
+      list.forEach(function(t) {
+        var as = t.assignedTo ? getUser(t.assignedTo).name : "-";
+        var d = t.updated && t.updated.toDate ? t.updated.toDate() : (t.created && t.created.toDate ? t.created.toDate() : null);
+        var dateStr = d ? d.toLocaleDateString("tr-TR") : "-";
+        tbl += '<tr class="ticket-row" data-id="' + t.id + '"><td>' + t.id + '</td><td>' + (t.title || "") + '</td><td><span class="badge ' + ticketStatusClass(t.status) + '">' + (STATUS_LABELS[t.status] || t.status) + '</span></td><td>' + as + '</td><td>' + dateStr + '</td></tr>';
+      });
+      document.getElementById("dash-tickets").innerHTML = tbl.length ? '<table><thead><tr><th>ID</th><th>Başlık</th><th>Durum</th><th>Atanan</th><th>Tarih</th></tr></thead><tbody>' + tbl + '</tbody></table>' : '<div class="empty-state">Henüz talep yok.</div>';
+      document.getElementById("dash-tickets").querySelectorAll(".ticket-row").forEach(function(row) {
+        row.addEventListener("click", function() { openTicketModal(row.getAttribute("data-id")); });
+      });
+      var activities = [];
+      TICKETS.forEach(function(t) {
+        if (t.hist && t.hist.length) {
+          t.hist.forEach(function(h) {
+            activities.push({ at: h.at, text: t.id + " " + (h.a || "güncellendi"), by: h.by });
+          });
+        }
+      });
+      activities.sort(function(a, b) {
+        var at = a.at && a.at.toDate ? a.at.toDate() : new Date(0);
+        var bt = b.at && b.at.toDate ? b.at.toDate() : new Date(0);
+        return bt - at;
+      });
+      var actHtml = activities.slice(0, 8).map(function(a) {
+        var d = a.at && a.at.toDate ? a.at.toDate() : null;
+        var ds = d ? d.toLocaleString("tr-TR") : "";
+        return '<div class="activity-item">' + a.text + ' <time>' + ds + '</time></div>';
+      }).join("");
+      document.getElementById("dash-activity").innerHTML = actHtml || '<div class="empty-state">Aktivite yok.</div>';
+      var days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+      var weekData = [0, 0, 0, 0, 0, 0, 0];
+      var now = new Date();
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(now);
+        d.setDate(d.getDate() - (6 - i));
+        TICKETS.forEach(function(t) {
+          var ct = t.created && t.created.toDate ? t.created.toDate() : null;
+          if (ct && ct.getDate() === d.getDate() && ct.getMonth() === d.getMonth() && ct.getFullYear() === d.getFullYear()) weekData[i]++;
+        });
+      }
+      var maxW = Math.max.apply(null, weekData) || 1;
+      document.getElementById("dash-weekly").innerHTML = weekData.map(function(v, i) {
+        return '<div class="chart-bar-wrap"><div class="chart-bar-lbl">' + days[i] + '</div><div class="chart-bar"><div class="chart-bar-fill" style="width:' + (100 * v / maxW) + '%"></div></div></div>';
+      }).join("");
+      var catCount = {};
+      CATS.forEach(function(c) { catCount[c] = 0; });
+      TICKETS.forEach(function(t) { catCount[t.cat] = (catCount[t.cat] || 0) + 1; });
+      var totalCat = TICKETS.length || 1;
+      document.getElementById("dash-cats").innerHTML = CATS.map(function(c) {
+        var n = catCount[c] || 0;
+        return '<div class="chart-bar-wrap"><div class="chart-bar-lbl">' + c + ' (' + n + ')</div><div class="chart-bar"><div class="chart-bar-fill" style="width:' + (100 * n / totalCat) + '%"></div></div></div>';
+      }).join("");
+    }
+
+    var ticketFilterStatus = "";
+    var ticketFilterPr = "";
+    var ticketFilterCat = "";
+    function renderTicketsPage() {
+      var statuses = [
+        { v: "", l: "Tümü" },
+        { v: "open", l: "Açık" },
+        { v: "progress", l: "İşlemde" },
+        { v: "resolved", l: "Çözüldü" },
+        { v: "closed", l: "Kapalı" }
+      ];
+      var tabHtml = statuses.map(function(s) {
+        return '<button type="button" class="ticket-tab' + (ticketFilterStatus === s.v ? " active" : "") + '" data-status="' + s.v + '">' + s.l + '</button>';
+      }).join("");
+      document.getElementById("ticket-tabs").innerHTML = tabHtml;
+      document.getElementById("ticket-tabs").querySelectorAll(".ticket-tab").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          ticketFilterStatus = btn.getAttribute("data-status");
+          document.getElementById("ticket-tabs").querySelectorAll(".ticket-tab").forEach(function(x) { x.classList.remove("active"); });
+          btn.classList.add("active");
+          renderTicketsTable();
+        });
+      });
+      document.getElementById("filter-priority").value = ticketFilterPr;
+      document.getElementById("filter-cat").value = ticketFilterCat;
+      document.getElementById("filter-priority").onchange = function() { ticketFilterPr = this.value; renderTicketsTable(); };
+      document.getElementById("filter-cat").onchange = function() { ticketFilterCat = this.value; renderTicketsTable(); };
+      document.getElementById("filter-clear").onclick = function() {
+        ticketFilterPr = "";
+        ticketFilterCat = "";
+        document.getElementById("filter-priority").value = "";
+        document.getElementById("filter-cat").value = "";
+        renderTicketsTable();
+      };
+      renderTicketsTable();
+    }
+    function renderTicketsTable() {
+      var list = TICKETS.filter(function(t) {
+        if (ticketFilterStatus && t.status !== ticketFilterStatus) return false;
+        if (ticketFilterPr && t.pr !== ticketFilterPr) return false;
+        if (ticketFilterCat && t.cat !== ticketFilterCat) return false;
+        return true;
+      });
+      var tbl = list.map(function(t) {
+        var as = t.assignedTo ? getUser(t.assignedTo).name : "-";
+        var d = t.updated && t.updated.toDate ? t.updated.toDate() : (t.created && t.created.toDate ? t.created.toDate() : null);
+        var dateStr = d ? d.toLocaleDateString("tr-TR") : "-";
+        return '<tr class="ticket-row" data-id="' + t.id + '"><td>' + t.id + '</td><td>' + (t.title || "") + '</td><td><span class="cat-tag">' + (t.cat || "") + '</span></td><td><span class="pr ' + (PR_CLASS[t.pr] || "pr-m") + '">' + (t.pr || "Orta") + '</span></td><td><span class="badge ' + ticketStatusClass(t.status) + '">' + (STATUS_LABELS[t.status] || t.status) + '</span></td><td>' + as + '</td><td>' + dateStr + '</td></tr>';
+      }).join("");
+      document.getElementById("tickets-table-wrap").innerHTML = tbl ? '<table><thead><tr><th>ID</th><th>Başlık</th><th>Kategori</th><th>Öncelik</th><th>Durum</th><th>Atanan</th><th>Tarih</th></tr></thead><tbody>' + tbl + '</tbody></table>' : '<div class="empty-state">Filtreye uygun talep yok.</div>';
+      document.getElementById("tickets-table-wrap").querySelectorAll(".ticket-row").forEach(function(row) {
+        row.addEventListener("click", function() { openTicketModal(row.getAttribute("data-id")); });
+      });
+    }
+
+    function renderMyTickets() {
+      var list = CU.role === "user"
+        ? TICKETS.filter(function(t) { return t.createdBy === CU.id; })
+        : TICKETS.filter(function(t) { return t.assignedTo === CU.id; });
+      list = list.slice().sort(function(a, b) {
+        var at = a.updated && a.updated.toDate ? a.updated.toDate() : (a.created && a.created.toDate ? a.created.toDate() : new Date(0));
+        var bt = b.updated && b.updated.toDate ? b.updated.toDate() : (b.created && b.created.toDate ? b.created.toDate() : new Date(0));
+        return bt - at;
+      });
+      var tbl = list.map(function(t) {
+        var d = t.updated && t.updated.toDate ? t.updated.toDate() : (t.created && t.created.toDate ? t.created.toDate() : null);
+        var dateStr = d ? d.toLocaleDateString("tr-TR") : "-";
+        return '<tr class="ticket-row" data-id="' + t.id + '"><td>' + t.id + '</td><td>' + (t.title || "") + '</td><td><span class="cat-tag">' + (t.cat || "") + '</span></td><td><span class="pr ' + (PR_CLASS[t.pr] || "pr-m") + '">' + (t.pr || "Orta") + '</span></td><td><span class="badge ' + ticketStatusClass(t.status) + '">' + (STATUS_LABELS[t.status] || t.status) + '</span></td><td>' + dateStr + '</td></tr>';
+      }).join("");
+      document.getElementById("my-tickets-wrap").innerHTML = tbl ? '<table><thead><tr><th>ID</th><th>Başlık</th><th>Kategori</th><th>Öncelik</th><th>Durum</th><th>Tarih</th></tr></thead><tbody>' + tbl + '</tbody></table>' : '<div class="empty-state">Talep bulunamadı.</div>';
+      document.getElementById("my-tickets-wrap").querySelectorAll(".ticket-row").forEach(function(row) {
+        row.addEventListener("click", function() { openTicketModal(row.getAttribute("data-id")); });
+      });
+    }
+    document.getElementById("btn-new-ticket").addEventListener("click", function() {
+      document.getElementById("new-tk-title").value = "";
+      document.getElementById("new-tk-desc").value = "";
+      openModal("ov-new");
+    });
+    document.getElementById("new-ticket-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var title = document.getElementById("new-tk-title").value.trim();
+      var cat = document.getElementById("new-tk-cat").value;
+      var pr = document.getElementById("new-tk-pr").value;
+      var desc = document.getElementById("new-tk-desc").value.trim();
+      var id = genId();
+      db.collection("users").where("role", "in", ["admin", "staff"]).get().then(function(snap) {
+        var staff = [];
+        snap.forEach(function(d) { staff.push({ id: d.id, data: d.data() }); });
+        var openByStaff = {};
+        TICKETS.filter(function(t) { return t.status === "open" || t.status === "progress"; }).forEach(function(t) {
+          if (t.assignedTo) openByStaff[t.assignedTo] = (openByStaff[t.assignedTo] || 0) + 1;
+        });
+        var assignTo = null;
+        if (staff.length) {
+          var min = Infinity;
+          staff.forEach(function(s) {
+            var c = openByStaff[s.id] || 0;
+            if (c < min) { min = c; assignTo = s.id; }
+          });
+        }
+        var data = {
+          id: id,
+          title: title,
+          cat: cat,
+          pr: pr,
+          status: "open",
+          createdBy: CU.id,
+          dept: CU.dept || "",
+          assignedTo: assignTo,
+          created: firebase.firestore.Timestamp.now(),
+          updated: firebase.firestore.Timestamp.now(),
+          desc: desc,
+          comments: [],
+          hist: [{ a: "Oluşturuldu", by: CU.id, at: firebase.firestore.Timestamp.now() }]
+        };
+        return db.collection("tickets").doc(id).set(data);
+      }).then(function() {
+        closeModal("ov-new");
+        toast("Talep oluşturuldu: " + id, "s");
+        renderMyTickets();
+        if (document.getElementById("pg-my").classList.contains("on")) renderMyTickets();
+      }).catch(function(err) {
+        toast(err.message || "Talep oluşturulamadı.", "e");
+      });
+    });
+
+    function openTicketModal(tid) {
+      var t = null;
+      for (var i = 0; i < TICKETS.length; i++) if (TICKETS[i].id === tid) { t = TICKETS[i]; break; }
+      if (!t) return;
+      var canEdit = CU.role === "admin" || CU.role === "staff" || t.createdBy === CU.id;
+      document.getElementById("ov-tk-title").textContent = t.id + " - " + (t.title || "");
+      var body = '<p><strong>Kategori:</strong> ' + (t.cat || "") + ' &nbsp; <strong>Öncelik:</strong> <span class="pr ' + (PR_CLASS[t.pr] || "pr-m") + '">' + (t.pr || "Orta") + '</span> &nbsp; <strong>Durum:</strong> <span class="badge ' + ticketStatusClass(t.status) + '">' + (STATUS_LABELS[t.status] || t.status) + '</span></p>';
+      body += '<p><strong>Açıklama:</strong></p><p>' + (t.desc || "-") + '</p>';
+      body += '<p><strong>Atanan:</strong> ' + (t.assignedTo ? getUser(t.assignedTo).name : "-") + '</p>';
+      body += '<div class="comment-list" id="ov-tk-comments"></div>';
+      if (canEdit) {
+        body += '<div class="form-group" style="margin-top:16px;"><label>Yorum ekle</label><textarea id="ov-tk-new-comment" rows="2"></textarea><button type="button" class="btn btn-prim btn-sm" id="ov-tk-add-comment">Gönder</button></div>';
+      }
+      document.getElementById("ov-tk-body").innerHTML = body;
+      var comments = t.comments || [];
+      var comHtml = comments.map(function(c) {
+        var u = getUser(c.by);
+        var at = c.at && c.at.toDate ? c.at.toDate().toLocaleString("tr-TR") : "";
+        return '<div class="comment-item"><div class="meta">' + u.name + ' - ' + at + '</div><div>' + (c.txt || "") + '</div></div>';
+      }).join("");
+      document.getElementById("ov-tk-comments").innerHTML = comHtml || "<p class=\"empty-state\">Henüz yorum yok.</p>";
+      var foot = "";
+      if (CU.role === "admin" || CU.role === "staff") {
+        foot += '<select id="ov-tk-status"><option value="open"' + (t.status === "open" ? " selected" : "") + '>Açık</option><option value="progress"' + (t.status === "progress" ? " selected" : "") + '>İşlemde</option><option value="waiting"' + (t.status === "waiting" ? " selected" : "") + '>Beklemede</option><option value="resolved"' + (t.status === "resolved" ? " selected" : "") + '>Çözüldü</option><option value="closed"' + (t.status === "closed" ? " selected" : "") + '>Kapalı</option></select>';
+        foot += '<select id="ov-tk-assign">';
+        USERS.forEach(function(u) {
+          if (u.role === "admin" || u.role === "staff") foot += '<option value="' + u.id + '"' + (t.assignedTo === u.id ? " selected" : "") + '>' + u.name + '</option>';
+        });
+        foot += '</select>';
+        foot += '<button type="button" class="btn btn-prim btn-sm" id="ov-tk-save">Kaydet</button>';
+      }
+      document.getElementById("ov-tk-foot").innerHTML = foot;
+      openModal("ov-tk");
+      var addBtn = document.getElementById("ov-tk-add-comment");
+      if (addBtn) {
+        addBtn.addEventListener("click", function() {
+          var txt = document.getElementById("ov-tk-new-comment").value.trim();
+          if (!txt) return;
+          var comments2 = (t.comments || []).slice();
+          comments2.push({ id: Date.now().toString(), by: CU.id, txt: txt, at: firebase.firestore.Timestamp.now() });
+          var hist2 = (t.hist || []).slice();
+          hist2.push({ a: "Yorum eklendi", by: CU.id, at: firebase.firestore.Timestamp.now() });
+          db.collection("tickets").doc(tid).update({
+            comments: comments2,
+            hist: hist2,
+            updated: firebase.firestore.Timestamp.now()
+          }).then(function() {
+            toast("Yorum eklendi.", "s");
+            document.getElementById("ov-tk-new-comment").value = "";
+            openTicketModal(tid);
+          }).catch(function(err) { toast(err.message, "e"); });
+        });
+      }
+      var saveBtn = document.getElementById("ov-tk-save");
+      if (saveBtn) {
+        saveBtn.addEventListener("click", function() {
+          var newStatus = document.getElementById("ov-tk-status").value;
+          var newAssign = document.getElementById("ov-tk-assign").value || null;
+          var hist2 = (t.hist || []).slice();
+          hist2.push({ a: "Durum: " + newStatus + (newAssign ? ", Atanan güncellendi" : ""), by: CU.id, at: firebase.firestore.Timestamp.now() });
+          db.collection("tickets").doc(tid).update({
+            status: newStatus,
+            assignedTo: newAssign,
+            hist: hist2,
+            updated: firebase.firestore.Timestamp.now()
+          }).then(function() {
+            toast("Kaydedildi.", "s");
+            closeModal("ov-tk");
+          }).catch(function(err) { toast(err.message, "e"); });
+        });
+      }
+    }
+
+    function renderNotifs() {
+      var list = NOTIFS.slice().sort(function(a, b) {
+        var at = a.created && a.created.toDate ? a.created.toDate() : new Date(0);
+        var bt = b.created && b.created.toDate ? b.created.toDate() : new Date(0);
+        return bt - at;
+      });
+      var html = list.map(function(n) {
+        var d = n.created && n.created.toDate ? n.created.toDate().toLocaleString("tr-TR") : "";
+        return '<div class="notif-item' + (n.read ? "" : " unread") + '" data-id="' + n.id + '"><span class="icon">&#128276;</span><div class="body">' + (n.body || "") + '</div><span class="time">' + d + '</span></div>';
+      }).join("");
+      document.getElementById("notifs-list").innerHTML = html || '<div class="empty-state">Bildirim yok.</div>';
+      document.getElementById("notifs-list").querySelectorAll(".notif-item").forEach(function(el) {
+        el.addEventListener("click", function() {
+          var id = el.getAttribute("data-id");
+          db.collection("notifications").doc(id).update({ read: true }).catch(function() {});
+        });
+      });
+      var unread = NOTIFS.filter(function(n) { return !n.read; }).length;
+      document.getElementById("notif-dot").style.display = unread ? "block" : "none";
+      document.getElementById("btn-notifs").classList.toggle("has-dot", unread > 0);
+    }
+    document.getElementById("mark-all-read").addEventListener("click", function() {
+      var batch = db.batch();
+      NOTIFS.filter(function(n) { return !n.read; }).forEach(function(n) {
+        batch.update(db.collection("notifications").doc(n.id), { read: true });
+      });
+      batch.commit().then(function() { toast("Tümü okundu işaretlendi.", "s"); }).catch(function() {});
+    });
+    document.getElementById("btn-notifs").addEventListener("click", function() {
+      document.querySelectorAll(".nav-link").forEach(function(x) { x.classList.remove("on"); });
+      document.querySelectorAll(".pg").forEach(function(p) { p.classList.remove("on"); });
+      document.getElementById("pg-notifs").classList.add("on");
+      var navBtn = document.querySelector("[data-page=\"pg-notifs\"]");
+      if (navBtn) navBtn.classList.add("on");
+      document.getElementById("header-title").textContent = "Bildirimler";
+      renderNotifs();
+    });
+
+    function renderReports() {
+      var total = TICKETS.length;
+      var resolved = TICKETS.filter(function(t) { return t.status === "resolved" || t.status === "closed"; }).length;
+      var rate = total ? Math.round(100 * resolved / total) : 0;
+      var active = TICKETS.filter(function(t) { return t.status !== "resolved" && t.status !== "closed"; }).length;
+      document.getElementById("reports-stats").innerHTML =
+        '<div class="stat-box blue"><div class="val">' + total + '</div><div class="lbl">Toplam Talep</div></div>' +
+        '<div class="stat-box green"><div class="val">%' + rate + '</div><div class="lbl">Çözüm Oranı</div></div>' +
+        '<div class="stat-box orange"><div class="val">' + active + '</div><div class="lbl">Aktif</div></div>' +
+        '<div class="stat-box"><div class="val">' + USERS.length + '</div><div class="lbl">Kullanıcı</div></div>';
+      var byMonth = {};
+      TICKETS.forEach(function(t) {
+        var ct = t.created && t.created.toDate ? t.created.toDate() : null;
+        if (ct) {
+          var m = ct.getMonth() + 1;
+        var key = ct.getFullYear() + "-" + (m < 10 ? "0" + m : "" + m);
+          byMonth[key] = (byMonth[key] || 0) + 1;
+        }
+      });
+      var months = Object.keys(byMonth).sort().slice(-6);
+      var maxM = 1;
+      months.forEach(function(k) { if (byMonth[k] > maxM) maxM = byMonth[k]; });
+      document.getElementById("reports-monthly").innerHTML = months.length ? months.map(function(k) {
+        var v = byMonth[k] || 0;
+        return '<div class="chart-bar-wrap"><div class="chart-bar-lbl">' + k + '</div><div class="chart-bar"><div class="chart-bar-fill" style="width:' + (100 * v / maxM) + '%"></div></div></div>';
+      }).join("") : '<div class="empty-state">Veri yok.</div>';
+      var prCount = { "Düşük": 0, "Orta": 0, "Yüksek": 0, "Kritik": 0 };
+      TICKETS.forEach(function(t) { if (prCount.hasOwnProperty(t.pr)) prCount[t.pr]++; });
+      var maxP = Math.max.apply(null, Object.values(prCount)) || 1;
+      document.getElementById("reports-priority").innerHTML = ["Düşük", "Orta", "Yüksek", "Kritik"].map(function(p) {
+        var v = prCount[p] || 0;
+        return '<div class="chart-bar-wrap"><div class="chart-bar-lbl">' + p + ' (' + v + ')</div><div class="chart-bar"><div class="chart-bar-fill" style="width:' + (100 * v / maxP) + '%"></div></div></div>';
+      }).join("");
+    }
+
+    function renderAdmin() {
+      document.querySelectorAll(".admin-tab").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          var tab = btn.getAttribute("data-tab");
+          document.querySelectorAll(".admin-tab").forEach(function(x) { x.classList.remove("active"); });
+          btn.classList.add("active");
+          document.querySelectorAll(".admin-pane").forEach(function(p) { p.style.display = "none"; });
+          var pane = document.getElementById("admin-" + tab);
+          if (pane) pane.style.display = "block";
+          if (tab === "users") renderAdminUsers();
+          if (tab === "team") renderAdminTeam();
+          if (tab === "settings") renderAdminSettings();
+        });
+      });
+      renderAdminUsers();
+    }
+    function renderAdminUsers() {
+      var html = USERS.map(function(u) {
+        var roleBadge = u.role === "admin" ? "admin" : (u.role === "staff" ? "staff" : "user");
+        var lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleString("tr-TR") : "-";
+        return '<div class="setting-row" style="flex-wrap:wrap;"><div><strong>' + (u.name || u.email) + '</strong> <span class="badge b-' + (u.role === "admin" ? "open" : (u.role === "staff" ? "prog" : "res")) + '">' + u.role + '</span><br><small>' + u.email + ' | Son giriş: ' + lastLogin + '</small></div><div><button type="button" class="btn btn-sec btn-sm edit-user-btn" data-uid="' + u.id + '">Düzenle</button></div></div>';
+      }).join("");
+      document.getElementById("admin-users-list").innerHTML = html || '<div class="empty-state">Kullanıcı yok.</div>';
+      document.getElementById("admin-users-list").querySelectorAll(".edit-user-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          var uid = btn.getAttribute("data-uid");
+          var u = null;
+          for (var i = 0; i < USERS.length; i++) if (USERS[i].id === uid) { u = USERS[i]; break; }
+          if (!u) return;
+          document.getElementById("eu-uid").value = u.id;
+          document.getElementById("eu-name").value = u.name || "";
+          document.getElementById("eu-role").value = u.role || "user";
+          var toggle = document.getElementById("eu-active");
+          toggle.classList.toggle("on", u.active !== false);
+          toggle.onclick = function() { toggle.classList.toggle("on"); };
+          openModal("ov-eu");
+        });
+      });
+    }
+    document.getElementById("edit-user-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var uid = document.getElementById("eu-uid").value;
+      var name = document.getElementById("eu-name").value.trim();
+      var role = document.getElementById("eu-role").value;
+      var active = document.getElementById("eu-active").classList.contains("on");
+      db.collection("users").doc(uid).update({ name: name, role: role, active: active }).then(function() {
+        toast("Kullanıcı güncellendi.", "s");
+        closeModal("ov-eu");
+      }).catch(function(err) { toast(err.message, "e"); });
+    });
+    function renderAdminTeam() {
+      var staff = USERS.filter(function(u) { return u.role === "staff" || u.role === "admin"; });
+      var html = staff.map(function(u) {
+        var open = TICKETS.filter(function(t) { return t.assignedTo === u.id && t.status !== "resolved" && t.status !== "closed"; }).length;
+        var res = TICKETS.filter(function(t) { return t.assignedTo === u.id && (t.status === "resolved" || t.status === "closed"); }).length;
+        return '<div class="team-card"><div class="name">' + (u.name || u.email) + '</div><div class="role">' + (u.staffRole || u.role) + '</div><div class="stats">Açık: ' + open + ' | Çözülen: ' + res + '</div></div>';
+      }).join("");
+      document.getElementById("admin-team-cards").innerHTML = html || '<div class="empty-state">Ekip üyesi yok.</div>';
+    }
+    function renderAdminSettings() {
+      document.getElementById("admin-settings-list").innerHTML =
+        '<div class="setting-row"><span>Sistem bildirimleri</span><button type="button" class="toggle on" id="set-notif"></button></div>' +
+        '<div class="setting-row"><span>E-posta bildirimleri</span><button type="button" class="toggle" id="set-email"></button></div>';
+    }
+
+    function renderProfile() {
+      document.getElementById("profile-name").value = CU.name || "";
+      document.getElementById("profile-dept").value = CU.dept || "";
+    }
+    document.getElementById("profile-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var name = document.getElementById("profile-name").value.trim();
+      var dept = document.getElementById("profile-dept").value.trim();
+      var fn = name.split(/\s+/)[0] || name;
+      var ln = name.split(/\s+/).slice(1).join(" ") || "";
+      db.collection("users").doc(CU.id).update({ name: name, dept: dept, fn: fn, ln: ln, ini: ini(name) }).then(function() {
+        CU.name = name;
+        CU.dept = dept;
+        CU.fn = fn;
+        CU.ln = ln;
+        CU.ini = ini(name);
+        document.getElementById("user-name").textContent = name;
+        document.getElementById("user-avatar").textContent = ini(name);
+        toast("Profil güncellendi.", "s");
+      }).catch(function(err) { toast(err.message, "e"); });
+    });
+    document.getElementById("pwd-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var cur = document.getElementById("pwd-current").value;
+      var newP = document.getElementById("pwd-new").value;
+      var newP2 = document.getElementById("pwd-new2").value;
+      if (newP !== newP2) { toast("Yeni şifreler eşleşmiyor.", "e"); return; }
+      var user = auth.currentUser;
+      if (!user || !user.email) return;
+      var cred = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+      user.reauthenticateWithCredential(cred).then(function() {
+        return user.updatePassword(newP);
+      }).then(function() {
+        document.getElementById("pwd-current").value = "";
+        document.getElementById("pwd-new").value = "";
+        document.getElementById("pwd-new2").value = "";
+        toast("Şifre güncellendi.", "s");
+      }).catch(function(err) { toast(err.message || "Şifre güncellenemedi.", "e"); });
+    });
+
+    function bootApp() {
+      document.getElementById("user-name").textContent = CU.name || CU.email || "Kullanıcı";
+      document.getElementById("user-avatar").textContent = CU.ini || "?";
+      document.getElementById("user-avatar").style.background = CU.col || "#0078d4";
+      var adminLinkEl = document.getElementById("header-admin-link");
+      if (adminLinkEl) {
+        adminLinkEl.style.display = (CU.role === "admin") ? "" : "none";
+        adminLinkEl.onclick = function(e) {
+          e.preventDefault();
+          document.querySelectorAll(".nav-link").forEach(function(x) { x.classList.remove("on"); });
+          var navBtn = document.querySelector("[data-page=\"pg-admin\"]");
+          if (navBtn) navBtn.classList.add("on");
+          document.querySelectorAll(".pg").forEach(function(p) { p.classList.remove("on"); });
+          document.getElementById("pg-admin").classList.add("on");
+          document.getElementById("header-title").textContent = "Admin Panel";
+          renderAdmin();
+          document.getElementById("sidebar").classList.remove("open");
+        };
+      }
+      db.collection("users").onSnapshot(function(snap) {
+        USERS = [];
+        snap.forEach(function(d) { USERS.push(Object.assign({ id: d.id }, d.data())); });
+        buildNav();
+      });
+      db.collection("tickets").onSnapshot(function(snap) {
+        TICKETS = [];
+        snap.forEach(function(d) { TICKETS.push(Object.assign({ id: d.id }, d.data())); });
+        buildNav();
+        var pg = document.querySelector(".pg.on");
+        if (pg) {
+          if (pg.id === "pg-dashboard") renderDashboard();
+          if (pg.id === "pg-tickets") renderTicketsTable();
+          if (pg.id === "pg-my") renderMyTickets();
+          if (pg.id === "pg-reports") renderReports();
+        }
+        var unread = NOTIFS.filter(function(n) { return !n.read; }).length;
+        document.getElementById("notif-dot").style.display = unread ? "block" : "none";
+        document.getElementById("btn-notifs").classList.toggle("has-dot", unread > 0);
+      });
+      db.collection("notifications").where("userId", "==", CU.id).onSnapshot(function(snap) {
+        NOTIFS = [];
+        snap.forEach(function(d) { NOTIFS.push(Object.assign({ id: d.id }, d.data())); });
+        renderNotifs();
+        if (!document.querySelector(".pg.on") || document.querySelector(".pg.on").id !== "pg-notifs") {
+          var unread = NOTIFS.filter(function(n) { return !n.read; }).length;
+          document.getElementById("notif-dot").style.display = unread ? "block" : "none";
+          document.getElementById("btn-notifs").classList.toggle("has-dot", unread > 0);
+        }
+      });
+      buildNav();
+      renderDashboard();
+      document.getElementById("menu-toggle").addEventListener("click", function() {
+        document.getElementById("sidebar").classList.toggle("open");
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
